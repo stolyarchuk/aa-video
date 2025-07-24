@@ -1,0 +1,131 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Configure CMake",
+      "type": "shell",
+      "command": "cmake",
+      "args": [
+        "-B",
+        "build",
+        "-S",
+        ".",
+        "-DCMAKE_BUILD_TYPE=Debug"
+      ],
+      "group": "build",
+      "detail": "Configure CMake project in Debug mode",
+      "problemMatcher": []
+    },
+    {
+      "label": "Build Project",
+      "type": "shell",
+      "command": "cmake",
+      "args": [
+        "--build",
+        "build",
+        "--config",
+        "Debug"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "dependsOn": "Configure CMake",
+      "detail": "Build the project using CMake",
+      "problemMatcher": [
+        "$gcc"
+      ]
+    },
+    {
+      "label": "Build Release",
+      "type": "shell",
+      "command": "cmake",
+      "args": [
+        "-B",
+        "build-release",
+        "-S",
+        ".",
+        "-DCMAKE_BUILD_TYPE=Release"
+      ],
+      "group": "build",
+      "detail": "Build project in Release mode"
+    },
+    {
+      "label": "Build Release Binary",
+      "type": "shell",
+      "command": "cmake",
+      "args": [
+        "--build",
+        "build-release",
+        "--config",
+        "Release"
+      ],
+      "group": "build",
+      "dependsOn": "Build Release",
+      "detail": "Build release binary"
+    },
+    {
+      "label": "Run Tests",
+      "type": "shell",
+      "command": "ctest",
+      "args": [
+        "--test-dir",
+        "build",
+        "--output-on-failure"
+      ],
+      "group": "test",
+      "dependsOn": "Build Project",
+      "detail": "Run unit tests with CTest",
+      "problemMatcher": []
+    },
+    {
+      "label": "Clean",
+      "type": "shell",
+      "command": "cmake",
+      "args": [
+        "--build",
+        "build",
+        "--target",
+        "clean"
+      ],
+      "group": "build",
+      "detail": "Clean build artifacts"
+    },
+    {
+      "label": "Run Application",
+      "type": "shell",
+      "command": "./build/test_task",
+      "group": "build",
+      "dependsOn": "Build Project",
+      "detail": "Run the built application"
+    },
+    {
+      "label": "Generate Documentation",
+      "type": "shell",
+      "command": "cmake",
+      "args": [
+        "-B",
+        "build-docs",
+        "-S",
+        ".",
+        "-DBUILD_DOCUMENTATION=ON"
+      ],
+      "group": "build",
+      "detail": "Configure CMake with documentation enabled"
+    },
+    {
+      "label": "Build Documentation",
+      "type": "shell",
+      "command": "cmake",
+      "args": [
+        "--build",
+        "build-docs",
+        "--target",
+        "docs"
+      ],
+      "group": "build",
+      "dependsOn": "Generate Documentation",
+      "detail": "Build API documentation with Doxygen"
+    }
+  ]
+}
