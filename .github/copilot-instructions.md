@@ -1,4 +1,7 @@
-<!-- Use this f  - Constants: kConstantName (e.g., `kMaxValue`, `kDefaultTimeout`)
+<!-- Use this f  -  - Constants: kConstantName (e.g., `kMaxValue`, `kDefaultTimeout`)
+  - Member variables: snake_case with trailing underscore (e.g., `value_`, `count_`)
+  - Namespaces: snake_case (e.g., `aa`)
+  - Macros: UPPER_SNAKE_CASE (e.g., `MY_MACRO`)stants: kConstantName (e.g., `kMaxValue`, `kDefaultTimeout`)
   - Member variables: snake_case with trailing underscore (e.g., `value_`, `count_`)
   - Namespaces: snake_case (e.g., `aa`)
   - Macros: UPPER_SNAKE_CASE (e.g., `MY_MACRO`)to provide workspace-specific custom instructions to Copilot. For more details, visit https://code.visualstudio.com/docs/copilot/copilot-customization#_use-a-githubcopilotinstructionsmd-file -->
@@ -64,7 +67,7 @@ This is a modern C++ project using CMake as the build system. Please follow thes
 - Include `@brief`, `@param`, `@return`, and `@throws` tags
 - Document all public classes and methods
 - Keep comments concise but informative
-- Generate docs with: `cmake -B build-docs -DBUILD_DOCUMENTATION=ON && cmake --build build-docs --target docs`
+- Generate docs with: `cmake -B build -DBUILD_DOCUMENTATION=ON && cmake --build build --target docs`
 
 ## Code Formatting
 

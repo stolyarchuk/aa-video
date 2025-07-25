@@ -82,13 +82,13 @@ To generate API documentation using Doxygen:
 
 ```bash
 # Configure with documentation enabled
-cmake -B build-docs -DBUILD_DOCUMENTATION=ON
+cmake -B build -DBUILD_DOCUMENTATION=ON
 
 # Build documentation
-cmake --build build-docs --target docs
+cmake --build build --target docs
 
 # Open documentation
-xdg-open build-docs/docs/html/index.html
+xdg-open build/docs/html/index.html
 ```
 
 The documentation is automatically generated and published to GitHub Pages on every push to the main branch.

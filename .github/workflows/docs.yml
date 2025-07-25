@@ -9,31 +9,42 @@ on:
 jobs:
   docs:
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Install dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y doxygen graphviz cmake
-    
+
     - name: Configure CMake
       run: cmake -B build -DBUILD_DOCUMENTATION=ON
-    
+
     - name: Build documentation
       run: cmake --build build --target docs
-    
+
     - name: Upload documentation artifacts
       uses: actions/upload-artifact@v4
       with:
         name: documentation
         path: build/docs/html/
-    
+
     - name: Deploy to GitHub Pages
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./build/docs/html
-        force_orphan: true
+      run: |
+        # Copy documentation to docs directory
+        rm -rf docs/
+        mkdir -p docs
+        cp -r build/docs/html/* docs/
+
+        # Configure git
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+
+        # Add and commit documentation
+        git add docs/
+        if ! git diff --staged --quiet; then
+          git commit -m "Update documentation [skip ci]"
+          git push
+        fi
