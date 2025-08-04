@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package aa.shared;
+
+// Point in 2D space
+message Point {
+  double x = 1;
+  double y = 2;
+}

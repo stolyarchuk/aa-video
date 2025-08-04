@@ -1,10 +1,4 @@
-<!-- Use this f  -  - Constants: kConstantName (e.g., `kMaxValue`, `kDefaultTimeout`)
-  - Member variables: snake_case with trailing underscore (e.g., `value_`, `count_`)
-  - Namespaces: snake_case (e.g., `aa`)
-  - Macros: UPPER_SNAKE_CASE (e.g., `MY_MACRO`)stants: kConstantName (e.g., `kMaxValue`, `kDefaultTimeout`)
-  - Member variables: snake_case with trailing underscore (e.g., `value_`, `count_`)
-  - Namespaces: snake_case (e.g., `aa`)
-  - Macros: UPPER_SNAKE_CASE (e.g., `MY_MACRO`)to provide workspace-specific custom instructions to Copilot. For more details, visit https://code.visualstudio.com/docs/copilot/copilot-customization#_use-a-githubcopilotinstructionsmd-file -->
+<!-- Use this file to provide workspace-specific custom instructions to Copilot. For more details, visit https://code.visualstudio.com/docs/copilot/copilot-customization#_use-a-githubcopilotinstructionsmd-file -->
 
 # C++ CMake Project Instructions
 
@@ -20,9 +14,10 @@ This is a modern C++ project using CMake as the build system. Please follow thes
   - Functions/Methods: PascalCase (e.g., `AddNumbers`, `GetValue`)
   - Variables: snake_case (e.g., `result_value`, `user_count`)
   - Constants: kConstantName (e.g., `kMaxValue`, `kDefaultTimeout`)
-  - Member variables: snake*case with trailing underscore (e.g., `value*`, `count\_`)
-  - Namespaces: snake_case (e.g., `test_task`)
+  - Member variables: snake_case with trailing underscore (e.g., `value_`, `count_`)
+  - Namespaces: snake_case (e.g., `aa`)
   - Macros: UPPER_SNAKE_CASE (e.g., `MY_MACRO`)
+- **Project Namespace**: Use `aa` as the main project namespace for all code.
 
 ## Project Structure
 
@@ -60,6 +55,8 @@ This is a modern C++ project using CMake as the build system. Please follow thes
 - Run tests after making changes
 - Use compiler warnings as errors (already configured)
 - **Cross-compilation**: Not currently supported, but planned for ARM64 Rockchip RK3588 SoC
+- **Preferred Development Environment**: Use the provided devcontainer and Visual Studio Code for all development tasks. This ensures a consistent, reproducible environment and access to all required tools.
+- **Commits**: Use [Conventional Commits](https://www.conventionalcommits.org/) for all commit messages to ensure clarity and consistency in version history.
 
 ## Documentation
 
@@ -95,7 +92,7 @@ This is a modern C++ project using CMake as the build system. Please follow thes
 
 #include "local_headers.h"
 
-namespace project_namespace {
+namespace aa {
 
 class ExampleClass {
  public:
@@ -114,14 +111,14 @@ class ExampleClass {
   std::string name_;
 };
 
-}  // namespace project_namespace
+}  // namespace aa
 
 // Implementation file structure (Google Style)
 #include "example_class.h"
 
 #include <stdexcept>
 
-namespace project_namespace {
+namespace aa {
 
 ExampleClass::ExampleClass(int value) : value_(value) {
   if (value < 0) {
@@ -140,7 +137,7 @@ void ExampleClass::SetValue(int value) {
   value_ = value;
 }
 
-}  // namespace project_namespace
+}  // namespace aa
 ```
 
-When generating code, ensure it follows these patterns and integrates well with the existing project structure.
+When generating code, ensure it follows these patterns, uses the `aa` namespace, and integrates well with the existing project structure. Prefer using the devcontainer and VS Code for all development tasks.

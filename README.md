@@ -7,13 +7,10 @@ A modern C++ project using CMake build system with testing support.
 ```text
 test_task/
 ├── CMakeLists.txt          # Main CMake configuration
-├── include/                # Header files
-│   └── calculator.h        # Calculator class header
+├── include/                # Header files (empty)
 ├── src/                    # Source files
-│   ├── main.cpp           # Main application entry point
-│   └── calculator.cpp     # Calculator implementation
-├── tests/                  # Test files
-│   └── test_calculator.cpp # Unit tests for calculator
+│   └── main.cpp           # Main application entry point
+├── tests/                  # Test files (empty)
 ├── build/                  # Build directory (generated)
 └── README.md              # This file
 ```
@@ -22,7 +19,7 @@ test_task/
 
 - **Modern C++23** standard
 - **CMake 3.20+** build system
-- **Google Test** integration for unit testing
+- **Google Test** integration ready for unit testing
 - **Strict compiler warnings** enabled
 - **Cross-platform** support
 - **Cross-compilation**: Not currently supported, but planned for ARM64 Rockchip RK3588 SoC in the future
@@ -66,7 +63,11 @@ cmake --build .
 
 ## Running Tests
 
-If Google Test is installed on your system:
+Currently no tests are available. To add tests:
+
+1. Create test files in the `tests/` directory
+2. Update `CMakeLists.txt` to include test files
+3. Build and run tests as shown below:
 
 ```bash
 # From build directory
