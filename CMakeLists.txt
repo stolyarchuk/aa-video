@@ -21,6 +21,12 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
+# Find required packages
+find_package(PkgConfig REQUIRED)
+find_package(Protobuf REQUIRED)
+find_package(gRPC REQUIRED)
+find_package(OpenCV REQUIRED)
+
 # Include directories
 include_directories(include)
 
@@ -34,7 +40,17 @@ set(SOURCES
 add_executable(${PROJECT_NAME} ${SOURCES})
 
 # Target include directories
-target_include_directories(${PROJECT_NAME} PRIVATE include)
+target_include_directories(${PROJECT_NAME} PRIVATE
+    include
+    ${OpenCV_INCLUDE_DIRS}
+)
+
+# Link libraries
+target_link_libraries(${PROJECT_NAME}
+    ${OpenCV_LIBS}
+    gRPC::grpc++
+    protobuf::libprotobuf
+)
 
 # Enable testing
 enable_testing()

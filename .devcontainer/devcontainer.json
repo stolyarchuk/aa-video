@@ -1,0 +1,39 @@
+{
+  "name": "C++ CMake Development",
+  "build": {
+    "dockerfile": "../Dockerfile",
+    "context": ".."
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.cpptools@prerelease",
+        "vadimcn.vscode-lldb",
+        "matepek.vscode-catch2-test-adapter",
+        "zxh404.vscode-proto3",
+        "twxs.cmake",
+        "maattdd.gitless",
+        "humao.rest-client",
+        "swindh.enumerator",
+        "timonwong.shellcheck"
+      ],
+      "settings": {
+        "cmake.configureOnOpen": true,
+        "cmake.buildBeforeRun": true,
+        "C_Cpp.default.cppStandard": "c++23",
+        "C_Cpp.default.intelliSenseMode": "gcc-x64",
+        "editor.formatOnSave": true,
+        "C_Cpp.clang_format_style": "file"
+      }
+    }
+  },
+  "forwardPorts": [
+    8080,
+    9090
+  ],
+  "remoteUser": "vscode"
+}
