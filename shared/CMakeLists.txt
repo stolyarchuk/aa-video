@@ -2,7 +2,9 @@
 
 # Protocol buffer definitions
 set(PROTO_FILES
-    proto/video_service.proto
+    proto/detector_service.proto
+    proto/point.proto
+    proto/polygon.proto
 )
 
 # Create proto directory and files
@@ -34,21 +36,27 @@ endforeach()
 
 # Source files for shared library
 set(SHARED_SOURCES
-    src/video_processor.cpp
-    src/frame_buffer.cpp
+    # src/video_processor.cpp
+    # src/frame_buffer.cpp
     src/config.cpp
 )
 
 # Add generated protobuf sources if proto files exist
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/proto/video_service.proto)
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/proto/detector_service.proto)
     list(APPEND SHARED_SOURCES
-        ${CMAKE_CURRENT_BINARY_DIR}/video_service.pb.cc
-        ${CMAKE_CURRENT_BINARY_DIR}/video_service.grpc.pb.cc
+        ${CMAKE_CURRENT_BINARY_DIR}/detector_service.pb.cc
+        ${CMAKE_CURRENT_BINARY_DIR}/detector_service.grpc.pb.cc
     )
 endif()
 
+# protobuf_generate_cpp(RPC_PROTOS_SRCS RPC_PROTOS_HDRS "${RPC_PROTOS}")
+# protobuf_generate_grpc_cpp(RPC_GRPC_SRCS RPC_GRPC_HDRS "${RPC_PROTOS}")
+
 # Create shared library
 add_library(aa_shared STATIC ${SHARED_SOURCES})
+
+# Create namespaced alias for consistent usage
+add_library(aa::shared ALIAS aa_shared)
 
 # Include directories
 target_include_directories(aa_shared

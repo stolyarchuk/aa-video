@@ -1,37 +1,35 @@
-# Client application for video processing bot
-
 # Source files
 set(CLIENT_SOURCES
     src/main.cpp
-    src/video_client.cpp
+    src/detector_client.cpp
 )
 
 # Create client executable
-add_executable(aa_video_client ${CLIENT_SOURCES})
+add_executable(detector_client ${CLIENT_SOURCES})
 
 # Include directories
-target_include_directories(aa_video_client
+target_include_directories(detector_client
     PRIVATE
         include
         ${CMAKE_SOURCE_DIR}/shared/include
 )
 
 # Link libraries
-target_link_libraries(aa_video_client
+target_link_libraries(detector_client
     PRIVATE
-        aa_shared
+        aa::shared
         ${OpenCV_LIBS}
         gRPC::grpc++
         protobuf::libprotobuf
 )
 
 # Set properties
-set_target_properties(aa_video_client PROPERTIES
+set_target_properties(detector_client PROPERTIES
     CXX_STANDARD 23
     CXX_STANDARD_REQUIRED ON
 )
 
 # Installation
-install(TARGETS aa_video_client
+install(TARGETS detector_client
     RUNTIME DESTINATION bin
 )

@@ -13,7 +13,6 @@
         "-DCMAKE_BUILD_TYPE=Debug"
       ],
       "group": "build",
-      "detail": "Configure CMake project in Debug mode",
       "problemMatcher": []
     },
     {
@@ -31,7 +30,6 @@
         "isDefault": true
       },
       "dependsOn": "Configure CMake",
-      "detail": "Build the project using CMake",
       "problemMatcher": [
         "$gcc"
       ]
@@ -47,8 +45,7 @@
         ".",
         "-DCMAKE_BUILD_TYPE=Release"
       ],
-      "group": "build",
-      "detail": "Build project in Release mode"
+      "group": "build"
     },
     {
       "label": "Build Release Binary",
@@ -61,8 +58,7 @@
         "Release"
       ],
       "group": "build",
-      "dependsOn": "Build Release",
-      "detail": "Build release binary"
+      "dependsOn": "Build Release"
     },
     {
       "label": "Run Tests",
@@ -75,7 +71,6 @@
       ],
       "group": "test",
       "dependsOn": "Build Project",
-      "detail": "Run unit tests with CTest",
       "problemMatcher": []
     },
     {
@@ -88,16 +83,14 @@
         "--target",
         "clean"
       ],
-      "group": "build",
-      "detail": "Clean build artifacts"
+      "group": "build"
     },
     {
       "label": "Run Application",
       "type": "shell",
       "command": "./build/test_task",
       "group": "build",
-      "dependsOn": "Build Project",
-      "detail": "Run the built application"
+      "dependsOn": "Build Project"
     },
     {
       "label": "Generate Documentation",
@@ -110,8 +103,7 @@
         ".",
         "-DBUILD_DOCUMENTATION=ON"
       ],
-      "group": "build",
-      "detail": "Configure CMake with documentation enabled"
+      "group": "build"
     },
     {
       "label": "Build Documentation",
@@ -124,8 +116,7 @@
         "docs"
       ],
       "group": "build",
-      "dependsOn": "Generate Documentation",
-      "detail": "Build API documentation with Doxygen"
+      "dependsOn": "Generate Documentation"
     }
   ]
 }

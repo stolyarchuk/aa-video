@@ -8,8 +8,32 @@
 namespace aa::server {
 
 VideoServiceImpl::VideoServiceImpl() {
-  // TODO: Initialize video processor and other components
-  std::cout << "VideoServiceImpl constructor - Implementation needed\n";
+// TODO: Initialize video processor and other components
+#include "aa/server/video_service_impl.h"
+
+#include <grpcpp/grpcpp.h>
+#include <iostream>
+
+  namespace aa::server {
+
+  VideoServiceImpl::VideoServiceImpl(){std::cout << "VideoServiceImpl constructor - Implementation needed
+                                                    ";
+  }
+
+  grpc::Status VideoServiceImpl::CheckHealth(grpc::ServerContext* context,
+                                             const aa::shared::CheckHealthRequest* request,
+                                             aa::shared::CheckHealthResponse* response) {
+    std::cout << "VideoServiceImpl::CheckHealth() - Implementation needed
+                 ";
+
+                 // Simple health check implementation
+                 response->set_healthy(true);
+    response->set_status("Service is running");
+
+    return grpc::Status::OK;
+  }
+
+  }  // namespace aa::server
 }
 
 grpc::Status VideoServiceImpl::ProcessFrame(grpc::ServerContext* context, const aa::shared::ProcessRequest* request,

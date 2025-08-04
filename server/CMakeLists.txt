@@ -3,8 +3,8 @@
 # Source files
 set(SERVER_SOURCES
     src/main.cpp
-    src/video_server.cpp
-    src/video_service_impl.cpp
+    # src/video_server.cpp
+    # src/video_service_impl.cpp
 )
 
 # Create server executable
