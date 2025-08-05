@@ -138,7 +138,7 @@ cv::Mat DetectorServer::RunInference(const cv::Mat& blob) {
 }
 
 std::vector<cv::Rect> DetectorServer::PostprocessDetections(
-    const cv::Mat& network_output, const cv::Mat& original_frame) {
+    const cv::Mat& network_output, const cv::Mat& /* original_frame */) {
   std::vector<cv::Rect> detections;
 
   try {
