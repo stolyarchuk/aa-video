@@ -34,6 +34,7 @@ endforeach()
 # Source files for shared library
 set(SHARED_SOURCES
     src/options.cpp
+    src/signal_set.cpp
 )
 
 # Add generated protobuf sources if proto files exist

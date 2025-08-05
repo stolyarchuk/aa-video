@@ -4,6 +4,7 @@
 
 #include "options.h"
 #include "logging.h"
+#include "signal_set.h"
 
 #include "detector_server.h"
 
@@ -21,11 +22,55 @@ int main(int argc, char* argv[]) {  // Parse command line arguments
 
   Logging::Initialize(options.IsVerbose());
 
+  AA_LOG_INFO("Starting detector server...");
+
   // Initialize the detector server
   DetectorServer server(options);
 
+  // Set up graceful shutdown signal handling
+  SignalSet signal_set;
+
+  // Flag to indicate shutdown request
+  std::atomic<bool> shutdown_requested{false};
+
+  // Register signal handlers for graceful shutdown
+  signal_set.Add(SIGINT, [&](int sig) {
+    AA_LOG_INFO("Received SIGINT (" << sig
+                                    << "), requesting graceful shutdown...");
+    shutdown_requested.store(true);
+    server.Shutdown();
+  });
+
+  signal_set.Add(SIGTERM, [&](int sig) {
+    AA_LOG_INFO("Received SIGTERM (" << sig
+                                     << "), requesting graceful shutdown...");
+    shutdown_requested.store(true);
+    server.Shutdown();
+  });
+
+  signal_set.Add(SIGUSR1, [&](int sig) {
+    AA_LOG_INFO("Received SIGUSR1 ("
+                << sig << "), server status: "
+                << (shutdown_requested.load() ? "shutting down" : "running"));
+  });
+
+  AA_LOG_INFO(
+      "Signal handlers registered. Server will shutdown gracefully on "
+      "SIGINT/SIGTERM.");
+  AA_LOG_INFO("Send SIGUSR1 to check server status.");
+
   server.Initialize();
-  server.Start();
+
+  try {
+    server.Start();  // This will block until shutdown
+  } catch (const std::exception& e) {
+    AA_LOG_ERROR("Server error: " << e.what());
+    return 1;
+  }
+
+  if (shutdown_requested.load()) {
+    AA_LOG_INFO("Server shutdown completed gracefully.");
+  }
 
   return 0;
 }
