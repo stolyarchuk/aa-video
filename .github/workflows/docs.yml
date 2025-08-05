@@ -2,49 +2,60 @@ name: Documentation
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
 
 jobs:
   docs:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch full history for proper documentation
 
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y doxygen graphviz cmake
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y doxygen graphviz cmake build-essential pkg-config \
+            libprotobuf-dev protobuf-compiler libgrpc-dev libgrpc++-dev \
+            libopencv-dev
 
-    - name: Configure CMake
-      run: cmake -B build -DBUILD_DOCUMENTATION=ON
+      - name: Configure CMake
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_DOCUMENTATION=ON
 
-    - name: Build documentation
-      run: cmake --build build --target docs
+      - name: Build project (required for some documentation dependencies)
+        run: cmake --build build --config Release
 
-    - name: Upload documentation artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: documentation
-        path: build/docs/html/
+      - name: Build documentation
+        run: cmake --build build --target docs
 
-    - name: Deploy to GitHub Pages
-      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      run: |
-        # Copy documentation to docs directory
-        rm -rf docs/
-        mkdir -p docs
-        cp -r build/docs/html/* docs/
+      - name: Upload documentation artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation
+          path: build/docs/html/
 
-        # Configure git
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
+      - name: Setup Pages
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: actions/configure-pages@v4
 
-        # Add and commit documentation
-        git add docs/
-        if ! git diff --staged --quiet; then
-          git commit -m "Update documentation [skip ci]"
-          git push
-        fi
+      - name: Upload to GitHub Pages
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/docs/html/
+
+      - name: Deploy to GitHub Pages
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        id: deployment
+        uses: actions/deploy-pages@v4
