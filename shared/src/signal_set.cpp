@@ -153,7 +153,7 @@ void SignalSet::Stop() {
   int fd = eventfd_.load();
   if (fd != -1) {
     uint64_t dummy = 0;
-    write(fd, &dummy, sizeof(dummy));
+    std::ignore = write(fd, &dummy, sizeof(dummy));
   }
 
   // Wait for the thread to finish
