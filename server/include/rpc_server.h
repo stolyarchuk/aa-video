@@ -37,8 +37,12 @@ class RpcServerFromThis {
 
   void Stop(const std::chrono::milliseconds& deadline =
                 std::chrono::milliseconds{100}) {
-    server_->Shutdown(std::chrono::system_clock::now() + deadline);
-    AA_LOG_INFO("server stopped listening on " << address_);
+    if (server_) {
+      server_->Shutdown(std::chrono::system_clock::now() + deadline);
+      AA_LOG_INFO("server stopped listening on " << address_);
+    } else {
+      AA_LOG_DEBUG("Stop called on server that was never started");
+    }
   }
 
  private:

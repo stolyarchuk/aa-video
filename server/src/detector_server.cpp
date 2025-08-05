@@ -53,14 +53,18 @@ void DetectorServer::InitializeNetwork() {
 
 bool DetectorServer::LoadModel() {
   try {
-    dnn_network_ =
-        cv::dnn::readNetFromONNX("/workspaces/test/models/resnet50.onnx");
+    std::string model_path = options_.GetModelPath();
+    AA_LOG_INFO("Loading model from: " << model_path);
 
-    // Check if network is empty (indicates successful placeholder creation)
+    dnn_network_ = cv::dnn::readNetFromONNX(model_path);
+
+    // Check if network is empty (indicates loading failure)
     if (dnn_network_.empty()) {
+      AA_LOG_ERROR("Failed to load model: network is empty");
       return false;
     }
 
+    AA_LOG_INFO("Model loaded successfully");
     return true;
 
   } catch (const cv::Exception& e) {
