@@ -9,35 +9,22 @@ namespace aa::client {
 
 class DetectorClient final : public RpcClient<aa::shared::DetectorService> {
  public:
-  using RpcClient::RpcClient;
-
   /**
    * @brief Construct a new Detector Client object from options
    *
    * @param options Configuration options containing server address
    */
-  explicit DetectorClient(const aa::shared::Options& options)
-      : RpcClient(options.GetAddress()) {}
+  explicit DetectorClient(aa::shared::Options options)
+      : RpcClient{options.GetAddress()}, options_{std::move(options)} {}
 
   grpc::Status CheckHealth(const aa::shared::CheckHealthRequest& request,
                            aa::shared::CheckHealthResponse* response) {
     return DoRequest(&aa::shared::DetectorService::Stub::CheckHealth, request,
                      response);
   }
-  // grpc::Status GetInputState(const Empty& request, GetInputStateRes*
-  // response);
 
-  // grpc::Status SetOutputState(const SetOutputStateReq& request,
-  // SetOutputStateRes* response); grpc::Status GetOutputState(const Empty&
-  // request, GetOutputStateRes* response);
-
-  // grpc::Status SetInputVolume(const SetInputVolumeReq& request,
-  // SetInputVolumeRes* response); grpc::Status GetInputVolume(const
-  // GetInputVolumeReq& request, GetInputVolumeRes* response);
-
-  // grpc::Status SetOutputVolume(const SetOutputVolumeReq& request,
-  // SetOutputVolumeRes* response); grpc::Status GetOutputVolume(const
-  // GetOutputVolumeReq& request, GetOutputVolumeRes* response);
+ private:
+  aa::shared::Options options_;
 };
 
 }  // namespace aa::client

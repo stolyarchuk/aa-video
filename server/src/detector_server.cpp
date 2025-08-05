@@ -8,12 +8,9 @@
 
 namespace aa::server {
 
-DetectorServer::DetectorServer(std::string_view address) {
-  service_ = std::make_unique<DetectorServiceImpl>(address);
-}
-
-DetectorServer::DetectorServer(const aa::shared::Options& options) {
-  service_ = std::make_unique<DetectorServiceImpl>(options.GetAddress());
+DetectorServer::DetectorServer(aa::shared::Options options)
+    : options_{std::move(options)} {
+  service_ = std::make_unique<DetectorServiceImpl>(options_.GetAddress());
 }
 
 void DetectorServer::Initialize() {
@@ -179,8 +176,8 @@ std::vector<cv::Rect> DetectorServer::PostprocessDetections(
 }
 
 grpc::Status DetectorServer::ProcessFrame(
-    const aa::shared::ProcessFrameRequest* request,
-    aa::shared::ProcessFrameResponse* response) const {
+    const aa::shared::ProcessFrameRequest* /* request */,
+    aa::shared::ProcessFrameResponse* /* response */) const {
   try {
     // TODO: Extract cv::Mat from request frame data
     // For now, create a dummy frame for testing

@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) {
   }
 
   // Create client
-  DetectorClient client(server_address);
+  DetectorClient client(options);
 
   // // Check connection
   // if (!client.IsConnected()) {

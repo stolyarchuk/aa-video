@@ -18,6 +18,8 @@ This is a modern C++ project using CMake as the build system. Please follow thes
   - Namespaces: snake_case (e.g., `aa`)
   - Macros: UPPER_SNAKE_CASE (e.g., `MY_MACRO`)
 - **Project Namespace**: Use `aa` as the main project namespace for all code.
+- **Constructor Initialization**: Always use curly brackets `{}` for member initialization lists instead of parentheses `()`
+- **Constructor Parameters**: Use "pass by value and then move" idiom for constructor parameters where acceptable (e.g., for expensive-to-copy types like strings, containers, complex objects)
 
 ## Header Guards
 
@@ -129,6 +131,8 @@ namespace aa {
 
 class ExampleClass {
  public:
+  // Use "pass by value and then move" for expensive-to-copy parameters
+  explicit ExampleClass(std::string name, std::vector<int> data);
   explicit ExampleClass(int value);
 
   // Getter methods
@@ -137,11 +141,12 @@ class ExampleClass {
 
   // Setter methods
   void SetValue(int value);
-  void SetName(const std::string& name);
+  void SetName(std::string name);  // Pass by value for move semantics
 
  private:
   int value_;
   std::string name_;
+  std::vector<int> data_;
 };
 
 }  // namespace aa
@@ -150,10 +155,19 @@ class ExampleClass {
 #include "example_class.h"
 
 #include <stdexcept>
+#include <utility>
 
 namespace aa {
 
-ExampleClass::ExampleClass(int value) : value_(value) {
+// Pass by value and move for expensive-to-copy types
+ExampleClass::ExampleClass(std::string name, std::vector<int> data) 
+    : name_{std::move(name)}, data_{std::move(data)} {
+  if (name_.empty()) {
+    throw std::invalid_argument("Name cannot be empty");
+  }
+}
+
+ExampleClass::ExampleClass(int value) : value_{value} {
   if (value < 0) {
     throw std::invalid_argument("Value must be non-negative");
   }
@@ -168,6 +182,13 @@ void ExampleClass::SetValue(int value) {
     throw std::invalid_argument("Value must be non-negative");
   }
   value_ = value;
+}
+
+void ExampleClass::SetName(std::string name) {
+  if (name.empty()) {
+    throw std::invalid_argument("Name cannot be empty");
+  }
+  name_ = std::move(name);
 }
 
 }  // namespace aa
