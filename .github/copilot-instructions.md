@@ -19,6 +19,13 @@ This is a modern C++ project using CMake as the build system. Please follow thes
   - Macros: UPPER_SNAKE_CASE (e.g., `MY_MACRO`)
 - **Project Namespace**: Use `aa` as the main project namespace for all code.
 
+## Header Guards
+
+- **Always use `#pragma once`** for header guards in all `.h` files
+- Place `#pragma once` as the very first line in header files
+- Do not use traditional `#ifndef`/`#define`/`#endif` header guards
+- If a header file is missing header guards, add `#pragma once` immediately
+
 ## Project Structure
 
 - **Headers**: Place in `include/` directory with `.h` extension

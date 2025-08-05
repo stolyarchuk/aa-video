@@ -7,9 +7,6 @@ set(PROTO_FILES
     proto/polygon.proto
 )
 
-# Create proto directory and files
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/proto)
-
 # Generate protobuf and gRPC files
 foreach(PROTO_FILE ${PROTO_FILES})
     get_filename_component(PROTO_NAME ${PROTO_FILE} NAME_WE)
@@ -36,8 +33,6 @@ endforeach()
 
 # Source files for shared library
 set(SHARED_SOURCES
-    # src/video_processor.cpp
-    # src/frame_buffer.cpp
     src/config.cpp
 )
 
@@ -48,9 +43,6 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/proto/detector_service.proto)
         ${CMAKE_CURRENT_BINARY_DIR}/detector_service.grpc.pb.cc
     )
 endif()
-
-# protobuf_generate_cpp(RPC_PROTOS_SRCS RPC_PROTOS_HDRS "${RPC_PROTOS}")
-# protobuf_generate_grpc_cpp(RPC_GRPC_SRCS RPC_GRPC_HDRS "${RPC_PROTOS}")
 
 # Create shared library
 add_library(aa_shared STATIC ${SHARED_SOURCES})

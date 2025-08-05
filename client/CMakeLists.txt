@@ -1,7 +1,6 @@
 # Source files
 set(CLIENT_SOURCES
     src/main.cpp
-    src/detector_client.cpp
 )
 
 # Create client executable

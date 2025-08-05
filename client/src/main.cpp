@@ -174,6 +174,6 @@ int main(int /* argc */, char** /* argv[] */) {
   // }
 
   // std::cout << "\nProcessed " << frame_count << " frames\n";
-  cv::destroyAllWindows();
+  // cv::destroyAllWindows();
   return 0;
 }

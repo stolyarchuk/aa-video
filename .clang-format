@@ -2,12 +2,6 @@
 # Based on Google style but with ColumnLimit increased to 120
 
 BasedOnStyle: Google
-ColumnLimit: 120
-
-# Additional customizations for better readability with longer lines
-IndentWidth: 2
-TabWidth: 2
-UseTab: Never
 
 # Keep Google's other formatting preferences
 AccessModifierOffset: -1
@@ -47,7 +41,7 @@ BreakBeforeTernaryOperators: true
 BreakConstructorInitializersBeforeComma: false
 BreakAfterJavaFieldAnnotations: false
 BreakStringLiterals: true
-CommentPragmas: '^ IWYU pragma:'
+CommentPragmas: "^ IWYU pragma:"
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
 ConstructorInitializerIndentWidth: 4
 ContinuationIndentWidth: 4
@@ -55,20 +49,20 @@ Cpp11BracedListStyle: true
 DerivePointerAlignment: true
 DisableFormat: false
 ExperimentalAutoDetectBinPacking: false
-ForEachMacros: [ foreach, Q_FOREACH, BOOST_FOREACH ]
+ForEachMacros: [foreach, Q_FOREACH, BOOST_FOREACH]
 IncludeCategories:
   - Regex: '^<.*\.h>'
     Priority: 1
-  - Regex: '^<.*'
+  - Regex: "^<.*"
     Priority: 2
-  - Regex: '.*'
+  - Regex: ".*"
     Priority: 3
-IncludeIsMainRegex: '([-_](test|unittest))?$'
+IncludeIsMainRegex: "([-_](test|unittest))?$"
 IndentCaseLabels: true
 IndentWrappedFunctionNames: false
 KeepEmptyLinesAtTheStartOfBlocks: false
-MacroBlockBegin: ''
-MacroBlockEnd: ''
+MacroBlockBegin: ""
+MacroBlockEnd: ""
 MaxEmptyLinesToKeep: 1
 NamespaceIndentation: None
 ObjCBlockIndentWidth: 2

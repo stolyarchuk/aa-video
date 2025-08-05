@@ -4,14 +4,22 @@
       "name": "Linux",
       "includePath": [
         "${workspaceFolder}/**",
-        "${workspaceFolder}/include"
+        "${workspaceFolder}/include",
+        "${workspaceFolder}/shared/include",
+        "${workspaceFolder}/client/include",
+        "${workspaceFolder}/server/include",
+        "${workspaceFolder}/build",
+        "${workspaceFolder}/build/shared",
+        "/usr/include",
+        "/usr/local/include"
       ],
       "defines": [],
       "compilerPath": "/usr/bin/gcc",
       "cStandard": "c17",
       "cppStandard": "c++23",
       "intelliSenseMode": "linux-gcc-x64",
-      "configurationProvider": "ms-vscode.cmake-tools"
+      "configurationProvider": "ms-vscode.cmake-tools",
+      "compileCommands": "${workspaceFolder}/build/compile_commands.json"
     }
   ],
   "version": 4
