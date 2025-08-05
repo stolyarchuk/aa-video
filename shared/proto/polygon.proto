@@ -13,137 +13,18 @@ enum PolygonType {
   POLYGON_TYPE_EXCLUSION = 2;  // Objects inside this zone will be ignored
 }
 
-// Processing priority level
-enum ProcessingPriority {
-  PRIORITY_UNSPECIFIED = 0;
-  PRIORITY_LOW = 1;
-  PRIORITY_NORMAL = 2;
-  PRIORITY_HIGH = 3;
-  PRIORITY_CRITICAL = 4;
-}
-
-// Target object classes for detection
-enum ObjectClass {
-  OBJECT_CLASS_UNSPECIFIED = 0;
-  OBJECT_CLASS_PERSON = 1;
-  OBJECT_CLASS_VEHICLE = 2;
-  OBJECT_CLASS_BICYCLE = 3;
-  OBJECT_CLASS_MOTORCYCLE = 4;
-  OBJECT_CLASS_CAR = 5;
-  OBJECT_CLASS_TRUCK = 6;
-  OBJECT_CLASS_BUS = 7;
-  OBJECT_CLASS_ANIMAL = 8;
-  OBJECT_CLASS_PACKAGE = 9;
-  OBJECT_CLASS_FACE = 10;
-  OBJECT_CLASS_LICENSE_PLATE = 11;
-  OBJECT_CLASS_GENERIC = 999;  // For custom object classes
-}
 
 // Polygon definition for detection zones
 message Polygon {
-  // Unique identifier for the polygon
-  string id = 1;
-
-  // Human-readable name for the polygon
-  string name = 2;
-
   // List of points defining the polygon boundary
-  repeated Point vertices = 3;
+  repeated Point vertices = 1;
 
   // Type of polygon (inclusion or exclusion)
-  PolygonType type = 4;
+  PolygonType type = 2;
 
   // Processing priority for objects within this polygon
-  ProcessingPriority priority = 5;
+  int32 priority = 3;
 
   // List of target object classes to detect in this polygon
-  repeated ObjectClass target_classes = 6;
-
-  // Custom object class names (for OBJECT_CLASS_GENERIC)
-  repeated string custom_class_names = 7;
-
-  // Optional metadata
-  map<string, string> metadata = 8;
-
-  // Whether this polygon is currently active
-  bool active = 9;
-
-  // Confidence threshold for detections in this polygon (0.0 - 1.0)
-  double confidence_threshold = 10;
-
-  // Timestamp when polygon was created
-  int64 created_timestamp = 11;
-
-  // Timestamp when polygon was last modified
-  int64 modified_timestamp = 12;
+  repeated int32 target_classes = 6;
 }
-
-// Collection of polygons for a frame or scene
-message PolygonList {
-  // List of polygons
-  repeated Polygon polygons = 1;
-
-  // Frame dimensions for coordinate normalization
-  int32 frame_width = 2;
-  int32 frame_height = 3;
-
-  // Coordinate system type
-  enum CoordinateSystem {
-    COORDINATE_SYSTEM_UNSPECIFIED = 0;
-    COORDINATE_SYSTEM_PIXEL = 1;       // Absolute pixel coordinates
-    COORDINATE_SYSTEM_NORMALIZED = 2;  // Normalized coordinates (0.0 - 1.0)
-  }
-  CoordinateSystem coordinate_system = 4;
-
-  // Version or revision of this polygon set
-  int32 version = 5;
-}
-
-// Request to validate polygon configuration
-message ValidatePolygonRequest {
-  Polygon polygon = 1;
-  int32 frame_width = 2;
-  int32 frame_height = 3;
-}
-
-// Response for polygon validation
-message ValidatePolygonResponse {
-  bool valid = 1;
-  repeated string error_messages = 2;
-  repeated string warning_messages = 3;
-}
-
-// Request to check if a point is inside polygon(s)
-message PointInPolygonRequest {
-  Point point = 1;
-  repeated Polygon polygons = 2;
-}
-
-// Response for point-in-polygon check
-message PointInPolygonResponse {
-  message PolygonMatch {
-    string polygon_id = 1;
-    PolygonType polygon_type = 2;
-    ProcessingPriority priority = 3;
-    repeated ObjectClass target_classes = 4;
-  }
-
-  repeated PolygonMatch matches = 1;
-  bool should_process = 2;                    // True if point should be processed based on polygon rules
-  ProcessingPriority effective_priority = 3;  // Highest priority from matching polygons
-}
-
-// // Polygon management service
-// service PolygonService {
-//   // Validate polygon configuration
-//   rpc ValidatePolygon(ValidatePolygonRequest) returns (ValidatePolygonResponse);
-
-//   // Check if point is inside polygons
-//   rpc CheckPointInPolygon(PointInPolygonRequest) returns (PointInPolygonResponse);
-
-//   // Get all polygons for a scene
-//   rpc GetPolygonSet(google.protobuf.Empty) returns (PolygonSet);
-
-//   // Update polygon configuration
-//   rpc UpdatePolygonSet(PolygonSet) returns (ValidatePolygonResponse);
-// }

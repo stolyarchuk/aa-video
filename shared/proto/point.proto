@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package aa.shared;
 
+option cc_enable_arenas = true;
+
 // Point in 2D space
 message Point {
   double x = 1;
