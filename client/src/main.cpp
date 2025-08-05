@@ -30,7 +30,6 @@ int main(int argc, char* argv[]) {
   int height = options.GetHeight();
   double confidence = options.GetConfidenceThreshold();
   bool verbose = options.IsVerbose();
-  bool use_gpu = options.UseGpu();
 
   if (verbose) {
     AA_LOG_INFO("Configuration:");
@@ -38,7 +37,6 @@ int main(int argc, char* argv[]) {
     AA_LOG_INFO("  Model: " << model_path);
     AA_LOG_INFO("  Resolution: " << width << "x" << height);
     AA_LOG_INFO("  Confidence: " << confidence);
-    AA_LOG_INFO("  GPU: " << (use_gpu ? "enabled" : "disabled"));
     AA_LOG_INFO("  Server: " << server_address);
   }
 

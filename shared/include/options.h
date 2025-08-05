@@ -91,13 +91,6 @@ class Options {
   std::string GetModelPath() const;
 
   /**
-   * @brief Get the configuration file path
-   *
-   * @return std::string Path to the configuration file
-   */
-  std::string GetConfigPath() const;
-
-  /**
    * @brief Get the server address for gRPC communication
    *
    * @return std::string Server address (e.g., "localhost:50051")
@@ -111,14 +104,6 @@ class Options {
    * @return false if verbose mode is disabled
    */
   bool IsVerbose() const;
-
-  /**
-   * @brief Check if GPU acceleration should be used
-   *
-   * @return true if GPU acceleration is enabled
-   * @return false if CPU processing should be used
-   */
-  bool UseGpu() const;
 
  private:
   cv::CommandLineParser parser_;

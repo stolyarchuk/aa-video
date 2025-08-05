@@ -58,14 +58,27 @@ class DetectorServer {
    */
   void Shutdown();
 
-  grpc::Status CheckHealth(const aa::shared::CheckHealthRequest*,
-                           aa::shared::CheckHealthResponse*) const;
-
-  grpc::Status ProcessFrame(const aa::shared::ProcessFrameRequest*,
-                            aa::shared::ProcessFrameResponse*) const;
-
  private:
   std::unique_ptr<DetectorServiceImpl> service_;
+
+  /**
+   * @brief Check the health of the server
+   *
+   * @param request Health check request
+   * @param response Health check response
+   * @return grpc::Status indicating success or failure
+   */
+  grpc::Status CheckHealth(const aa::shared::CheckHealthRequest*,
+                           aa::shared::CheckHealthResponse*) const;
+  /**
+   * @brief Process a frame for detection
+   *
+   * @param request Frame processing request
+   * @param response Frame processing response
+   * @return grpc::Status indicating success or failure
+   */
+  grpc::Status ProcessFrame(const aa::shared::ProcessFrameRequest*,
+                            aa::shared::ProcessFrameResponse*) const;
 };
 
 }  // namespace aa::server

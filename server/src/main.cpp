@@ -24,5 +24,8 @@ int main(int argc, char* argv[]) {  // Parse command line arguments
   // Initialize the detector server
   DetectorServer server(options);
 
+  server.Initialize();
+  server.Start();
+
   return 0;
 }

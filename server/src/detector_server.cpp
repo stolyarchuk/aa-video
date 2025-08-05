@@ -7,6 +7,7 @@ DetectorServer::DetectorServer(std::string_view address) {
 }
 
 DetectorServer::DetectorServer(const aa::shared::Options &options) {
+
   service_ = std::make_unique<DetectorServiceImpl>(options.GetAddress());
 }
 
