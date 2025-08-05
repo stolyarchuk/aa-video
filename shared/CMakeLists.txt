@@ -2,51 +2,65 @@
 
 # Protocol buffer definitions
 set(PROTO_FILES
-    proto/detector_service.proto
-    proto/point.proto
-    proto/polygon.proto
+    point.proto
+    frame.proto
+    polygon.proto
+    detector_service.proto
 )
 
 # Generate protobuf and gRPC files
+set(PROTO_GENERATED_SOURCES)
+set(PROTO_GENERATED_HEADERS)
+
 foreach(PROTO_FILE ${PROTO_FILES})
     get_filename_component(PROTO_NAME ${PROTO_FILE} NAME_WE)
-    get_filename_component(PROTO_PATH ${PROTO_FILE} PATH)
 
     set(PROTO_SRCS "${CMAKE_CURRENT_BINARY_DIR}/${PROTO_NAME}.pb.cc")
     set(PROTO_HDRS "${CMAKE_CURRENT_BINARY_DIR}/${PROTO_NAME}.pb.h")
     set(GRPC_SRCS "${CMAKE_CURRENT_BINARY_DIR}/${PROTO_NAME}.grpc.pb.cc")
     set(GRPC_HDRS "${CMAKE_CURRENT_BINARY_DIR}/${PROTO_NAME}.grpc.pb.h")
 
-    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${PROTO_FILE})
+    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/proto/${PROTO_FILE})
         add_custom_command(
             OUTPUT "${PROTO_SRCS}" "${PROTO_HDRS}" "${GRPC_SRCS}" "${GRPC_HDRS}"
             COMMAND protobuf::protoc
             ARGS --grpc_out "${CMAKE_CURRENT_BINARY_DIR}"
                  --cpp_out "${CMAKE_CURRENT_BINARY_DIR}"
-                 -I "${CMAKE_CURRENT_SOURCE_DIR}/${PROTO_PATH}"
+                 -I "${CMAKE_CURRENT_SOURCE_DIR}/proto"
                  --plugin=protoc-gen-grpc=$<TARGET_FILE:gRPC::grpc_cpp_plugin>
-                 "${CMAKE_CURRENT_SOURCE_DIR}/${PROTO_FILE}"
-            DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/${PROTO_FILE}"
+                 "${CMAKE_CURRENT_SOURCE_DIR}/proto/${PROTO_FILE}"
+            DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/proto/${PROTO_FILE}"
         )
+
+        list(APPEND PROTO_GENERATED_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/${PROTO_NAME}.pb.cc)
+        list(APPEND PROTO_GENERATED_HEADERS ${CMAKE_CURRENT_BINARY_DIR}/${PROTO_NAME}.pb.h)
+
+        # Only add gRPC files for service definitions
+        if(${PROTO_NAME} STREQUAL "detector_service")
+            list(APPEND PROTO_GENERATED_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/${PROTO_NAME}.grpc.pb.cc)
+            list(APPEND PROTO_GENERATED_HEADERS ${CMAKE_CURRENT_BINARY_DIR}/${PROTO_NAME}.grpc.pb.h)
+        endif()
     endif()
 endforeach()
+
+# Create a custom target for protobuf generation
+add_custom_target(proto_generation DEPENDS ${PROTO_GENERATED_SOURCES} ${PROTO_GENERATED_HEADERS})
 
 # Source files for shared library
 set(SHARED_SOURCES
     src/options.cpp
     src/signal_set.cpp
+    src/point.cpp
+    src/frame.cpp
+    src/polygon.cpp
+    ${PROTO_GENERATED_SOURCES}
 )
-
-# Add generated protobuf sources if proto files exist
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/proto/detector_service.proto)
-    list(APPEND SHARED_SOURCES
-        ${CMAKE_CURRENT_BINARY_DIR}/detector_service.pb.cc
-        ${CMAKE_CURRENT_BINARY_DIR}/detector_service.grpc.pb.cc
-    )
-endif()
 
 # Create shared library
 add_library(aa_shared STATIC ${SHARED_SOURCES})
+
+# Add dependency on protobuf generation
+add_dependencies(aa_shared proto_generation)
 
 # Create namespaced alias for consistent usage
 add_library(aa::shared ALIAS aa_shared)

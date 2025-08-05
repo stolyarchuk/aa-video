@@ -1,29 +1,21 @@
 syntax = "proto3";
 
-package aa.shared;
+package aa.proto;
+
+import "frame.proto";
+import "polygon.proto";
 
 option cc_enable_arenas = true;
-
-// Video frame data representing OpenCV cv::Mat
-message Frame {
-  int32 rows = 1;      // Number of rows (height)
-  int32 cols = 2;      // Number of columns (width)
-  int32 elm_type = 3;  // Element type (CV_8UC3, CV_32FC1, etc.)
-  int32 elm_size = 4;  // Size of each element in bytes
-  bytes data = 5;      // Raw pixel data
-}
 
 // Processing request
 message ProcessFrameRequest {
   Frame frame = 1;
+  repeated Polygon polygons = 2;  // List of polygons for detection zones
 }
 
 // Processing response
 message ProcessFrameResponse {
   Frame result = 1;
-  bool success = 2;
-  string error_message = 3;
-  double processing_time_ms = 4;
 }
 
 // Health check

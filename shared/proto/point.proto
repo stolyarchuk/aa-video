@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package aa.shared;
+package aa.proto;
 
 option cc_enable_arenas = true;
 

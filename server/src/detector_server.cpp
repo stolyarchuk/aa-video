@@ -36,8 +36,8 @@ void DetectorServer::Start() {
 void DetectorServer::Shutdown() { service_->Stop(); }
 
 grpc::Status DetectorServer::CheckHealth(
-    const aa::shared::CheckHealthRequest*,
-    aa::shared::CheckHealthResponse*) const {
+    const aa::proto::CheckHealthRequest*,
+    aa::proto::CheckHealthResponse*) const {
   return grpc::Status::OK;
 }
 
@@ -182,8 +182,8 @@ std::vector<cv::Rect> DetectorServer::PostprocessDetections(
 }
 
 grpc::Status DetectorServer::ProcessFrame(
-    const aa::shared::ProcessFrameRequest* /* request */,
-    aa::shared::ProcessFrameResponse* /* response */) const {
+    const aa::proto::ProcessFrameRequest* /* request */,
+    aa::proto::ProcessFrameResponse* /* response */) const {
   try {
     // TODO: Extract cv::Mat from request frame data
     // For now, create a dummy frame for testing

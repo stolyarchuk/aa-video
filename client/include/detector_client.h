@@ -7,7 +7,7 @@
 
 namespace aa::client {
 
-class DetectorClient final : public RpcClient<aa::shared::DetectorService> {
+class DetectorClient final : public RpcClient<aa::proto::DetectorService> {
  public:
   /**
    * @brief Construct a new Detector Client object from options
@@ -18,9 +18,9 @@ class DetectorClient final : public RpcClient<aa::shared::DetectorService> {
       : RpcClient{options.Get<std::string>("address")},
         options_{std::move(options)} {}
 
-  grpc::Status CheckHealth(const aa::shared::CheckHealthRequest& request,
-                           aa::shared::CheckHealthResponse* response) {
-    return DoRequest(&aa::shared::DetectorService::Stub::CheckHealth, request,
+  grpc::Status CheckHealth(const aa::proto::CheckHealthRequest& request,
+                           aa::proto::CheckHealthResponse* response) {
+    return DoRequest(&aa::proto::DetectorService::Stub::CheckHealth, request,
                      response);
   }
 

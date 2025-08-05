@@ -105,8 +105,8 @@ class DetectorServer {
    * @param response Health check response
    * @return grpc::Status indicating success or failure
    */
-  grpc::Status CheckHealth(const aa::shared::CheckHealthRequest*,
-                           aa::shared::CheckHealthResponse*) const;
+  grpc::Status CheckHealth(const aa::proto::CheckHealthRequest*,
+                           aa::proto::CheckHealthResponse*) const;
   /**
    * @brief Process a frame for detection
    *
@@ -114,8 +114,8 @@ class DetectorServer {
    * @param response Frame processing response
    * @return grpc::Status indicating success or failure
    */
-  grpc::Status ProcessFrame(const aa::shared::ProcessFrameRequest*,
-                            aa::shared::ProcessFrameResponse*) const;
+  grpc::Status ProcessFrame(const aa::proto::ProcessFrameRequest*,
+                            aa::proto::ProcessFrameResponse*) const;
 };
 
 }  // namespace aa::server
