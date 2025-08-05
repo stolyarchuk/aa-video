@@ -112,7 +112,12 @@ jobs:
           max-size: 2G
 
       - name: Configure CMake
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_DOCUMENTATION=ON
+        run: |
+          export CC="ccache gcc"
+          export CXX="ccache g++"
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_DOCUMENTATION=ON \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
       - name: Build project (required for some documentation dependencies)
         run: cmake --build build --config Release
