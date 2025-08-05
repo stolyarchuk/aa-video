@@ -3,16 +3,13 @@ cmake_minimum_required(VERSION 3.20)
 # Project definition
 project(aa_video_processing VERSION 1.0.0 LANGUAGES CXX)
 
-# NOTE: Cross-compilation is not currently supported but planned for ARM64 Rockchip RK3588 SoC
-# TODO: Add cross-compilation toolchain support for embedded targets
+# Export compile commands for IDE integration
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-
-# Export compile commands for IDE integration
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Set build type if not specified
 if(NOT CMAKE_BUILD_TYPE)
@@ -21,7 +18,7 @@ endif()
 
 # Add compile flags for better development experience
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wall -Werror -Wextra -Wpedantic")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra -Wpedantic -Wno-error -DKAZVINCI_DEBUG")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra -Wpedantic -Wno-error")
 
 # Build options
 option(BUILD_CLIENT "Build client application" ON)
@@ -33,7 +30,7 @@ option(BUILD_DOCUMENTATION "Create and install the HTML based API documentation 
 find_package(PkgConfig REQUIRED)
 find_package(Protobuf REQUIRED)
 find_package(gRPC REQUIRED)
-find_package(OpenCV REQUIRED)
+find_package(OpenCV REQUIRED COMPONENTS core imgproc videoio highgui)
 
 # Enable testing
 if(BUILD_TESTS)

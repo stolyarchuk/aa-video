@@ -33,7 +33,7 @@ endforeach()
 
 # Source files for shared library
 set(SHARED_SOURCES
-    src/config.cpp
+    src/options.cpp
 )
 
 # Add generated protobuf sources if proto files exist

@@ -4,50 +4,46 @@
 #include <thread>
 
 #include "detector_client.h"
+#include "options.h"
+#include "logging.h"
 
 using namespace aa::client;
+using namespace aa::shared;
 
-void PrintUsage(const char* program_name) {
-  std::cout << "Usage: " << program_name << " [options]\n";
-  std::cout << "Options:\n";
-  std::cout << "  --server <address>    Server address (default: localhost:50051)\n";
-  std::cout << "  --operation <op>      Operation: blur, edge_detect, resize (default: blur)\n";
-  std::cout << "  --input <path>        Input video file or camera index (default: 0)\n";
-  std::cout << "  --stream              Use streaming mode\n";
-  std::cout << "  --help                Show this help\n";
-}
+int main(int argc, char* argv[]) {
+  // Parse command line arguments
+  Options options(argc, argv);
 
-int main(int /* argc */, char** /* argv[] */) {
-  // std::string server_address = Config::kDefaultServerAddress;
-  std::string operation = "blur";
-  std::string input = "0";  // Default to camera 0
-  bool use_streaming = false;
+  // Check if arguments are valid
+  if (!options.IsValid()) {
+    options.PrintHelp();
+    return 1;
+  }
 
-  // // Parse command line arguments
-  // for (int i = 1; i < argc; ++i) {
-  //   std::string arg = argv[i];
-  //   if (arg == "--server" && i + 1 < argc) {
-  //     server_address = argv[++i];
-  //   } else if (arg == "--operation" && i + 1 < argc) {
-  //     operation = argv[++i];
-  //   } else if (arg == "--input" && i + 1 < argc) {
-  //     input = argv[++i];
-  //   } else if (arg == "--stream") {
-  //     use_streaming = true;
-  //   } else if (arg == "--help") {
-  //     PrintUsage(argv[0]);
-  //     return 0;
-  //   }
-  // }
+  Logging::Initialize(options.IsVerbose());
 
-  std::cout << "Video Processing Client\n";
-  // std::cout << "Server: " << server_address << "\n";
-  std::cout << "Operation: " << operation << "\n";
-  std::cout << "Input: " << input << "\n";
-  std::cout << "Streaming: " << (use_streaming ? "Yes" : "No") << "\n\n";
+  // Get configuration from command line
+  std::string input = options.GetInput();
+  std::string model_path = options.GetModelPath();
+  std::string server_address = "localhost:50051";  // Default server address
+  int width = options.GetWidth();
+  int height = options.GetHeight();
+  double confidence = options.GetConfidenceThreshold();
+  bool verbose = options.IsVerbose();
+  bool use_gpu = options.UseGpu();
+
+  if (verbose) {
+    AA_LOG_INFO("Configuration:");
+    AA_LOG_INFO("  Input: " << input);
+    AA_LOG_INFO("  Model: " << model_path);
+    AA_LOG_INFO("  Resolution: " << width << "x" << height);
+    AA_LOG_INFO("  Confidence: " << confidence);
+    AA_LOG_INFO("  GPU: " << (use_gpu ? "enabled" : "disabled"));
+    AA_LOG_INFO("  Server: " << server_address);
+  }
 
   // Create client
-  DetectorClient("server_address");
+  DetectorClient client(server_address);
 
   // // Check connection
   // if (!client.IsConnected()) {
@@ -74,7 +70,8 @@ int main(int /* argc */, char** /* argv[] */) {
   // }
 
   // std::cout << "Video source opened successfully!\n";
-  // std::cout << "Press 'q' to quit, 's' to save frame, 'c' to change operation\n\n";
+  // std::cout << "Press 'q' to quit, 's' to save frame, 'c' to change
+  // operation\n\n";
 
   // // Prepare operation parameters
   // std::map<std::string, std::string> parameters;
@@ -117,7 +114,9 @@ int main(int /* argc */, char** /* argv[] */) {
   //   }
 
   //   auto frame_end = std::chrono::high_resolution_clock::now();
-  //   auto frame_time = std::chrono::duration_cast<std::chrono::milliseconds>(frame_end - frame_start).count();
+  //   auto frame_time =
+  //   std::chrono::duration_cast<std::chrono::milliseconds>(frame_end -
+  //   frame_start).count();
 
   //   if (success) {
   //     // Display original and processed frames
@@ -127,9 +126,11 @@ int main(int /* argc */, char** /* argv[] */) {
   //     frame_count++;
   //     if (frame_count % 30 == 0) {  // Print stats every 30 frames
   //       auto current_time = std::chrono::high_resolution_clock::now();
-  //       auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - start_time).count();
-  //       double fps = (frame_count * 1000.0) / elapsed;
-  //       std::cout << "FPS: " << fps << ", Frame time: " << frame_time << "ms\n";
+  //       auto elapsed =
+  //       std::chrono::duration_cast<std::chrono::milliseconds>(current_time -
+  //       start_time).count(); double fps = (frame_count * 1000.0) / elapsed;
+  //       std::cout << "FPS: " << fps << ", Frame time: " << frame_time <<
+  //       "ms\n";
   //     }
   //   } else {
   //     std::cerr << "Failed to process frame\n";
@@ -140,9 +141,9 @@ int main(int /* argc */, char** /* argv[] */) {
   //   if (key == 'q') {
   //     break;
   //   } else if (key == 's' && success) {
-  //     std::string filename = "processed_frame_" + std::to_string(frame_count) + ".jpg";
-  //     cv::imwrite(filename, result);
-  //     std::cout << "Saved frame to " << filename << "\n";
+  //     std::string filename = "processed_frame_" + std::to_string(frame_count)
+  //     + ".jpg"; cv::imwrite(filename, result); std::cout << "Saved frame to "
+  //     << filename << "\n";
   //   } else if (key == 'c') {
   //     // Cycle through operations
   //     if (operation == "blur") {
