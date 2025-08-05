@@ -10,7 +10,7 @@ include_directories(${CMAKE_SOURCE_DIR}/shared/include)
 include_directories(${CMAKE_SOURCE_DIR}/server/include)
 
 # Find required dependencies for server tests
-find_package(OpenCV REQUIRED)
+# find_package(OpenCV REQUIRED)
 find_package(Protobuf REQUIRED)
 find_package(gRPC REQUIRED)
 

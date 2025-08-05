@@ -17,31 +17,21 @@ class Logging {
    *
    * @param verbose If true, enables debug logging; otherwise info level
    */
-  static void Initialize(bool verbose = false) {
-    if (verbose) {
-      cv::utils::logging::setLogLevel(cv::utils::logging::LOG_LEVEL_DEBUG);
-    } else {
-      cv::utils::logging::setLogLevel(cv::utils::logging::LOG_LEVEL_INFO);
-    }
-  }
+  static void Initialize(bool verbose = false);
 
   /**
    * @brief Set specific log level
    *
    * @param level OpenCV log level to set
    */
-  static void SetLogLevel(cv::utils::logging::LogLevel level) {
-    cv::utils::logging::setLogLevel(level);
-  }
+  static void SetLogLevel(cv::utils::logging::LogLevel level);
 
   /**
    * @brief Get current log level
    *
    * @return Current OpenCV log level
    */
-  static cv::utils::logging::LogLevel GetLogLevel() {
-    return cv::utils::logging::getLogLevel();
-  }
+  static cv::utils::logging::LogLevel GetLogLevel();
 };
 
 }  // namespace aa::shared

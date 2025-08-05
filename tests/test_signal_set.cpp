@@ -29,7 +29,6 @@
 #include <unistd.h>  // for getpid(), kill()
 
 #include "signal_set.h"
-#include "logging.h"
 
 using namespace aa::shared;
 

@@ -51,6 +51,7 @@ set(SHARED_SOURCES
     src/options.cpp
     src/signal_set.cpp
     src/point.cpp
+    src/logging.cpp
     src/frame.cpp
     src/polygon.cpp
     ${PROTO_GENERATED_SOURCES}

@@ -22,7 +22,6 @@
 #include <sstream>
 
 #include "options.h"
-#include "logging.h"
 
 using namespace aa::shared;
 
@@ -42,7 +41,6 @@ class OptionsTest : public ::testing::Test {
  protected:
   void SetUp() override {
     // Initialize logging for test output
-    Logging::Initialize(false);  // Disable verbose logging in tests
   }
 
   void TearDown() override {
