@@ -45,9 +45,9 @@ if(BUILD_CLIENT)
     add_subdirectory(client)
 endif()
 
-# if(BUILD_SERVER)
-#     add_subdirectory(server)
-# endif()
+if(BUILD_SERVER)
+    add_subdirectory(server)
+endif()
 
 # Documentation
 option(BUILD_DOCUMENTATION "Create and install the HTML based API documentation (requires Doxygen)" OFF)

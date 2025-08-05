@@ -3,36 +3,36 @@
 # Source files
 set(SERVER_SOURCES
     src/main.cpp
-    # src/video_server.cpp
-    # src/video_service_impl.cpp
+    src/detector_server.cpp
 )
 
 # Create server executable
-add_executable(aa_video_server ${SERVER_SOURCES})
+add_executable(detector_server ${SERVER_SOURCES})
 
 # Include directories
-target_include_directories(aa_video_server
+target_include_directories(detector_server
     PRIVATE
         include
         ${CMAKE_SOURCE_DIR}/shared/include
 )
 
 # Link libraries
-target_link_libraries(aa_video_server
+target_link_libraries(detector_server
     PRIVATE
-        aa_shared
+        aa::shared
         ${OpenCV_LIBS}
         gRPC::grpc++
+        gRPC::grpc++_reflection
         protobuf::libprotobuf
 )
 
 # Set properties
-set_target_properties(aa_video_server PROPERTIES
+set_target_properties(detector_server PROPERTIES
     CXX_STANDARD 23
     CXX_STANDARD_REQUIRED ON
 )
 
 # Installation
-install(TARGETS aa_video_server
+install(TARGETS detector_server
     RUNTIME DESTINATION bin
 )
