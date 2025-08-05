@@ -4,7 +4,6 @@
       "name": "Linux",
       "includePath": [
         "${workspaceFolder}/**",
-        "${workspaceFolder}/include",
         "${workspaceFolder}/shared/include",
         "${workspaceFolder}/client/include",
         "${workspaceFolder}/server/include",
