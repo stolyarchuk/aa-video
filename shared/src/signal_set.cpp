@@ -18,6 +18,42 @@ SignalSet::SignalSet() : is_active_{false} { Initialize(); }
 
 SignalSet::~SignalSet() { Stop(); }
 
+SignalSet::SignalSet(SignalSet&& other) noexcept : is_active_{false} {
+  // Move the state from other
+  handlers_ = std::move(other.handlers_);
+  registered_signals_ = std::move(other.registered_signals_);
+  original_handlers_ = std::move(other.original_handlers_);
+  signal_thread_ = std::move(other.signal_thread_);
+  is_active_.store(other.is_active_.load());
+
+  // Reset other's state
+  other.is_active_.store(false);
+  other.handlers_.clear();
+  other.registered_signals_.clear();
+  other.original_handlers_.clear();
+}
+
+SignalSet& SignalSet::operator=(SignalSet&& other) noexcept {
+  if (this != &other) {
+    // Stop current instance
+    Stop();
+
+    // Move the state from other
+    handlers_ = std::move(other.handlers_);
+    registered_signals_ = std::move(other.registered_signals_);
+    original_handlers_ = std::move(other.original_handlers_);
+    signal_thread_ = std::move(other.signal_thread_);
+    is_active_.store(other.is_active_.load());
+
+    // Reset other's state
+    other.is_active_.store(false);
+    other.handlers_.clear();
+    other.registered_signals_.clear();
+    other.original_handlers_.clear();
+  }
+  return *this;
+}
+
 void SignalSet::Initialize() {
   // Create eventfd for async-signal-safe communication
   int fd = eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK);

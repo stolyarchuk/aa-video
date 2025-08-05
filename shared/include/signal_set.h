@@ -69,8 +69,8 @@ class SignalSet {
   SignalSet& operator=(const SignalSet&) = delete;
 
   // Enable move construction and assignment
-  SignalSet(SignalSet&&) noexcept = default;
-  SignalSet& operator=(SignalSet&&) noexcept = default;
+  SignalSet(SignalSet&& other) noexcept;
+  SignalSet& operator=(SignalSet&& other) noexcept;
 
   /**
    * @brief Add a signal handler
