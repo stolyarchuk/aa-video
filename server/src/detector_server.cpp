@@ -169,7 +169,9 @@ std::vector<cv::Rect> DetectorServer::PostprocessDetections(
     AA_LOG_DEBUG("Network output dims: " << network_output.dims << ", size: ");
     for (int i = 0; i < network_output.dims; ++i) {
       AA_LOG_DEBUG(network_output.size[i]);
-      if (i < network_output.dims - 1) AA_LOG_DEBUG("x");
+      if (i < network_output.dims - 1) {
+        AA_LOG_DEBUG("x")
+      };
     }
 
   } catch (const cv::Exception& e) {
