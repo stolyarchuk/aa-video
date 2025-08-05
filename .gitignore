@@ -76,3 +76,5 @@ coverage/
 
 
 ipch
+models
+.devcontainer/*.sh
