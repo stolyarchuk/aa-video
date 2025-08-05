@@ -10,7 +10,9 @@ struct DetectorServiceMethods {
 
   using ObserverTable =
       std::tuple<ServiceMethod<aa::shared::CheckHealthRequest,
-                               aa::shared::CheckHealthResponse>>;
+                               aa::shared::CheckHealthResponse>,
+                 ServiceMethod<aa::shared::ProcessFrameRequest,
+                               aa::shared::ProcessFrameResponse>>;
 };
 
 class DetectorServiceImpl final : public aa::shared::DetectorService::Service,
@@ -24,6 +26,14 @@ class DetectorServiceImpl final : public aa::shared::DetectorService::Service,
                            aa::shared::CheckHealthResponse* response) override {
     return Invoke<DetectorServiceMethods::kCheckHealth>(context, request,
                                                         response);
+  }
+
+  grpc::Status ProcessFrame(
+      grpc::ServerContext* context,
+      const aa::shared::ProcessFrameRequest* request,
+      aa::shared::ProcessFrameResponse* response) override {
+    return Invoke<DetectorServiceMethods::kProcessFrame>(context, request,
+                                                         response);
   }
 };
 

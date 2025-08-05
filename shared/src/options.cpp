@@ -11,6 +11,7 @@ const std::string keys =
     "{confidence c   | 0.5  | Confidence threshold for detection (0.0-1.0)}"
     "{model m        |      | Path to detection model file (required)}"
     "{config cfg     |      | Path to configuration file (optional)}"
+    "{address a      | localhost:50051 | Server address for gRPC communication}"
     "{verbose v      | false| Enable verbose output}"
     "{gpu g          | false| Use GPU acceleration if available}";
 
@@ -52,6 +53,10 @@ std::string Options::GetConfigPath() const {
   return parser_.get<std::string>("config");
 }
 
+std::string Options::GetAddress() const {
+  return parser_.get<std::string>("address");
+}
+
 bool Options::IsVerbose() const { return parser_.get<bool>("verbose"); }
 
 bool Options::UseGpu() const { return parser_.get<bool>("gpu"); }
@@ -69,6 +74,8 @@ void Options::InitializeParser(int argc, const char* const argv[]) {
       "{confidence c   | 0.5  | Confidence threshold for detection (0.0-1.0)}"
       "{model m        |      | Path to detection model file (required)}"
       "{config cfg     |      | Path to configuration file (optional)}"
+      "{address a      | localhost:50051 | Server address for gRPC "
+      "communication}"
       "{verbose v      | false| Enable verbose output}"
       "{gpu g          | false| Use GPU acceleration if available}";
 

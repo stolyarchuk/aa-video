@@ -14,14 +14,14 @@ message Frame {
 }
 
 // Processing request
-message ProcessRequest {
+message ProcessFrameRequest {
   Frame frame = 1;
   string operation = 2;  // e.g., "blur", "edge_detect", "resize"
   map<string, string> parameters = 3;
 }
 
 // Processing response
-message ProcessResponse {
+message ProcessFrameResponse {
   Frame result = 1;
   bool success = 2;
   string error_message = 3;
@@ -38,6 +38,6 @@ message CheckHealthResponse {
 
 // Detection service
 service DetectorService {
-  rpc ProcessFrame(ProcessRequest) returns (ProcessResponse);
+  rpc ProcessFrame(ProcessFrameRequest) returns (ProcessFrameResponse);
   rpc CheckHealth(CheckHealthRequest) returns (CheckHealthResponse);
 }

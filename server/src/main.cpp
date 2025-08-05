@@ -5,7 +5,7 @@
 #include "options.h"
 #include "logging.h"
 
-#include "detector_service.h"
+#include "detector_server.h"
 
 using namespace aa::server;
 using namespace aa::shared;
@@ -20,5 +20,9 @@ int main(int argc, char* argv[]) {  // Parse command line arguments
   }
 
   Logging::Initialize(options.IsVerbose());
+
+  // Initialize the detector server
+  DetectorServer server(options);
+
   return 0;
 }

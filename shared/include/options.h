@@ -98,6 +98,13 @@ class Options {
   std::string GetConfigPath() const;
 
   /**
+   * @brief Get the server address for gRPC communication
+   *
+   * @return std::string Server address (e.g., "localhost:50051")
+   */
+  std::string GetAddress() const;
+
+  /**
    * @brief Check if verbose output is enabled
    *
    * @return true if verbose mode is enabled

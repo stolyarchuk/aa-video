@@ -3,6 +3,7 @@
 #include <string_view>
 
 #include "detector_service.h"
+#include "options.h"
 
 namespace aa::server {
 
@@ -21,6 +22,13 @@ class DetectorServer {
    * @param address Server listening address (e.g., "localhost:50051")
    */
   explicit DetectorServer(std::string_view address);
+
+  /**
+   * @brief Construct a new Detector Server object from options
+   *
+   * @param options Configuration options containing server settings
+   */
+  explicit DetectorServer(const aa::shared::Options& options);
 
   /**
    * @brief Destroy the Detector Server object
@@ -52,6 +60,9 @@ class DetectorServer {
 
   grpc::Status CheckHealth(const aa::shared::CheckHealthRequest*,
                            aa::shared::CheckHealthResponse*) const;
+
+  grpc::Status ProcessFrame(const aa::shared::ProcessFrameRequest*,
+                            aa::shared::ProcessFrameResponse*) const;
 
  private:
   std::unique_ptr<DetectorServiceImpl> service_;
