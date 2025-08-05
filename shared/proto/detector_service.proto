@@ -16,8 +16,6 @@ message Frame {
 // Processing request
 message ProcessFrameRequest {
   Frame frame = 1;
-  string operation = 2;  // e.g., "blur", "edge_detect", "resize"
-  map<string, string> parameters = 3;
 }
 
 // Processing response

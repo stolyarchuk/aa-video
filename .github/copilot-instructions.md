@@ -25,6 +25,7 @@ This is a modern C++ project using CMake as the build system. Please follow thes
 - Place `#pragma once` as the very first line in header files
 - Do not use traditional `#ifndef`/`#define`/`#endif` header guards
 - If a header file is missing header guards, add `#pragma once` immediately
+- If a header file is missing header guards, add `#pragma once` immediately
 
 ## Project Structure
 
@@ -54,6 +55,31 @@ This is a modern C++ project using CMake as the build system. Please follow thes
 - Use exceptions for error conditions (e.g., `std::invalid_argument`)
 - Prefer RAII for resource management
 - Use smart pointers when dynamic allocation is needed
+
+## Logging
+
+- **Always use AA_LOG_* macros** from `logging.h` instead of `std::cout`, `std::cerr`, or `printf`
+- Include `logging.h` header when using logging functionality
+- **Available log levels**:
+  - `AA_LOG_ERROR("message")` - For error conditions and failures
+  - `AA_LOG_WARNING("message")` - For warnings and potential issues
+  - `AA_LOG_INFO("message")` - For general information and status updates
+  - `AA_LOG_DEBUG("message")` - For detailed debugging information
+- **Usage examples**:
+  ```cpp
+  #include "logging.h"
+
+  // Error logging
+  AA_LOG_ERROR("Failed to load model: " << error_message);
+
+  // Info logging with variables
+  AA_LOG_INFO("Processing completed with " << count << " results");
+
+  // Debug logging (can be compiled out in release builds)
+  AA_LOG_DEBUG("Network output dims: " << dims << ", size: " << size);
+  ```
+- **Benefits**: Thread-safe, configurable log levels, consistent formatting, and can be optimized for production builds
+- **Never use** `std::cout`, `std::cerr`, `std::clog`, or `printf` for logging - use AA_LOG_* macros instead
 
 ## Build and Development
 

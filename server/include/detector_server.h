@@ -1,6 +1,10 @@
 #pragma once
 
+#include <memory>
 #include <string_view>
+
+#include <opencv2/dnn.hpp>
+#include <opencv2/opencv.hpp>
 
 #include "detector_service.h"
 #include "options.h"
@@ -60,6 +64,46 @@ class DetectorServer {
 
  private:
   std::unique_ptr<DetectorServiceImpl> service_;
+  cv::dnn::Net dnn_network_;
+
+  /**
+   * @brief Initialize the neural network for inference
+   */
+  void InitializeNetwork();
+
+  /**
+   * @brief Load the ResNet model for object detection
+   *
+   * @return true if model loaded successfully
+   * @return false if failed to load model
+   */
+  bool LoadModel();
+
+  /**
+   * @brief Preprocess input frame for neural network inference
+   *
+   * @param frame Input OpenCV Mat frame
+   * @return cv::Mat Preprocessed blob ready for inference
+   */
+  cv::Mat PreprocessFrame(const cv::Mat& frame);
+
+  /**
+   * @brief Run inference on the preprocessed frame
+   *
+   * @param blob Preprocessed input blob
+   * @return cv::Mat Network output with detections
+   */
+  cv::Mat RunInference(const cv::Mat& blob);
+
+  /**
+   * @brief Post-process network outputs to extract detections
+   *
+   * @param network_output Raw network output
+   * @param original_frame Original input frame for reference
+   * @return std::vector<cv::Rect> Detected bounding boxes
+   */
+  std::vector<cv::Rect> PostprocessDetections(const cv::Mat& network_output,
+                                              const cv::Mat& original_frame);
 
   /**
    * @brief Check the health of the server

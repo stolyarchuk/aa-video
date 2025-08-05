@@ -30,7 +30,7 @@ option(BUILD_DOCUMENTATION "Create and install the HTML based API documentation 
 find_package(PkgConfig REQUIRED)
 find_package(Protobuf REQUIRED)
 find_package(gRPC REQUIRED)
-find_package(OpenCV REQUIRED COMPONENTS core imgproc videoio highgui)
+find_package(OpenCV REQUIRED COMPONENTS core imgproc videoio highgui dnn)
 
 # Enable testing
 if(BUILD_TESTS)
