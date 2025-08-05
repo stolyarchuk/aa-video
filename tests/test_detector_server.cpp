@@ -15,26 +15,23 @@ class DetectorServerTest : public ::testing::Test {
   void SetUp() override {
     // Create test arguments for Options with valid parameters
     const char* test_argv[] = {
-        "test_program",
-        "--address",
-        "localhost:50051",
-        "--model",
-        "/nonexistent/path/model.onnx",  // Non-existent path for testing
-        "--input",
-        "test_input.png",
-        "--confidence",
-        "0.5"};
+        "test_program", "--address=localhost:50051",
+        "--model=/nonexistent/path/model.onnx",  // Non-existent path for
+                                                 // testing
+        "--input=test_input.png", "--confidence=0.5"};
     int test_argc = sizeof(test_argv) / sizeof(test_argv[0]);
 
-    test_options_ = std::make_unique<aa::shared::Options>(test_argc, test_argv);
+    test_options_ = std::make_unique<aa::shared::Options>(
+        test_argc, test_argv, "Test Detector Server");
 
     // Create valid options for successful tests
-    const char* valid_argv[] = {"test_program", "--address", "localhost:50052",
-                                "--input", "input.png"};
+    const char* valid_argv[] = {"test_program", "--address=localhost:50052",
+                                "--input=input.png",
+                                "--model=/test/model.onnx"};
     int valid_argc = sizeof(valid_argv) / sizeof(valid_argv[0]);
 
-    valid_options_ =
-        std::make_unique<aa::shared::Options>(valid_argc, valid_argv);
+    valid_options_ = std::make_unique<aa::shared::Options>(
+        valid_argc, valid_argv, "Test Detector Server");
   }
 
   void TearDown() override {
@@ -60,7 +57,7 @@ TEST_F(DetectorServerTest, ConstructorMoveSemantics) {
 
   // Create a copy to test move semantics
   aa::shared::Options options_copy = *valid_options_;
-  std::string original_address = options_copy.GetAddress();
+  std::string original_address = options_copy.Get<std::string>("address");
 
   EXPECT_NO_THROW({
     DetectorServer server(std::move(options_copy));
@@ -70,11 +67,11 @@ TEST_F(DetectorServerTest, ConstructorMoveSemantics) {
 
 // Test: Constructor with different server addresses
 TEST_F(DetectorServerTest, ConstructorWithDifferentAddresses) {
-  const char* test_argv[] = {"test_program", "--address", "127.0.0.1:8080",
-                             "--model", "/test/model.onnx"};
+  const char* test_argv[] = {"test_program", "--address=127.0.0.1:8080",
+                             "--model=/test/model.onnx"};
   int test_argc = sizeof(test_argv) / sizeof(test_argv[0]);
 
-  aa::shared::Options options(test_argc, test_argv);
+  aa::shared::Options options(test_argc, test_argv, "Test Server");
   ASSERT_TRUE(options.IsValid());
 
   // Constructor should work with different addresses
@@ -83,10 +80,12 @@ TEST_F(DetectorServerTest, ConstructorWithDifferentAddresses) {
 
 // Test: Constructor with minimal valid options
 TEST_F(DetectorServerTest, ConstructorWithMinimalOptions) {
-  const char* minimal_argv[] = {"test_program", "--address", "localhost:50053"};
+  const char* minimal_argv[] = {"test_program", "--address=localhost:50053",
+                                "--model=/test/model.onnx"};
   int minimal_argc = sizeof(minimal_argv) / sizeof(minimal_argv[0]);
 
-  aa::shared::Options minimal_options(minimal_argc, minimal_argv);
+  aa::shared::Options minimal_options(minimal_argc, minimal_argv,
+                                      "Test Server");
   ASSERT_TRUE(minimal_options.IsValid());
 
   EXPECT_NO_THROW({ DetectorServer server(std::move(minimal_options)); });
@@ -104,12 +103,13 @@ TEST_F(DetectorServerTest, InitializeWithModelLoadingFailure) {
 // Test: Initialize method exception handling
 TEST_F(DetectorServerTest, InitializeExceptionHandling) {
   // Test with options that will cause model loading to fail
-  const char* bad_model_argv[] = {"test_program", "--address",
-                                  "localhost:50054", "--model",
-                                  "/invalid/path/nonexistent_model.onnx"};
+  const char* bad_model_argv[] = {
+      "test_program", "--address=localhost:50054",
+      "--model=/invalid/path/nonexistent_model.onnx"};
   int bad_model_argc = sizeof(bad_model_argv) / sizeof(bad_model_argv[0]);
 
-  aa::shared::Options bad_options(bad_model_argc, bad_model_argv);
+  aa::shared::Options bad_options(bad_model_argc, bad_model_argv,
+                                  "Test Server");
   ASSERT_TRUE(bad_options.IsValid());
 
   DetectorServer server(std::move(bad_options));
@@ -202,13 +202,13 @@ TEST_F(DetectorServerTest, RAIIBehavior) {
 // Test: Error handling with different option combinations
 TEST_F(DetectorServerTest, ErrorHandlingWithDifferentOptions) {
   // Test with verbose options
-  const char* verbose_argv[] = {
-      "test_program", "--address", "localhost:50055",
-      "--verbose",    "true",      "--confidence",
-      "0.8",          "--model",   "/another/nonexistent/path.onnx"};
+  const char* verbose_argv[] = {"test_program", "--address=localhost:50055",
+                                "--verbose=true", "--confidence=0.8",
+                                "--model=/another/nonexistent/path.onnx"};
   int verbose_argc = sizeof(verbose_argv) / sizeof(verbose_argv[0]);
 
-  aa::shared::Options verbose_options(verbose_argc, verbose_argv);
+  aa::shared::Options verbose_options(verbose_argc, verbose_argv,
+                                      "Test Server");
   ASSERT_TRUE(verbose_options.IsValid());
 
   DetectorServer server(std::move(verbose_options));
@@ -245,11 +245,13 @@ TEST_F(DetectorServerTest, MultipleServerInstances) {
   std::vector<std::unique_ptr<DetectorServer>> servers;
 
   for (int i = 0; i < 5; ++i) {
-    const char* test_argv[] = {"test_program", "--address",
-                               ("localhost:5005" + std::to_string(i)).c_str()};
+    const char* test_argv[] = {
+        "test_program",
+        ("--address=localhost:5005" + std::to_string(i)).c_str(),
+        "--model=/test/model.onnx"};
     int test_argc = sizeof(test_argv) / sizeof(test_argv[0]);
 
-    aa::shared::Options options(test_argc, test_argv);
+    aa::shared::Options options(test_argc, test_argv, "Test Server");
     if (options.IsValid()) {
       EXPECT_NO_THROW({
         servers.emplace_back(

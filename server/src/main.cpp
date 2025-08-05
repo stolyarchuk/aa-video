@@ -12,7 +12,7 @@ using namespace aa::server;
 using namespace aa::shared;
 
 int main(int argc, char* argv[]) {  // Parse command line arguments
-  Options options(argc, argv);
+  Options options(argc, argv, "Detector Server");
 
   // Check if arguments are valid
   if (!options.IsValid()) {

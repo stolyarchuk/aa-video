@@ -12,7 +12,7 @@ using namespace aa::shared;
 
 int main(int argc, char* argv[]) {
   // Parse command line arguments
-  Options options(argc, argv);
+  Options options(argc, argv, "Detector Client");
 
   // Check if arguments are valid
   if (!options.IsValid()) {
@@ -21,24 +21,6 @@ int main(int argc, char* argv[]) {
   }
 
   Logging::Initialize(options.IsVerbose());
-
-  // Get configuration from command line
-  std::string input = options.GetInput();
-  std::string model_path = options.GetModelPath();
-  std::string server_address = "localhost:50051";  // Default server address
-  int width = options.GetWidth();
-  int height = options.GetHeight();
-  double confidence = options.GetConfidenceThreshold();
-  bool verbose = options.IsVerbose();
-
-  if (verbose) {
-    AA_LOG_INFO("Configuration:");
-    AA_LOG_INFO("  Input: " << input);
-    AA_LOG_INFO("  Model: " << model_path);
-    AA_LOG_INFO("  Resolution: " << width << "x" << height);
-    AA_LOG_INFO("  Confidence: " << confidence);
-    AA_LOG_INFO("  Server: " << server_address);
-  }
 
   // Create client
   DetectorClient client(options);

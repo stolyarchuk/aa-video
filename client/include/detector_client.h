@@ -15,7 +15,8 @@ class DetectorClient final : public RpcClient<aa::shared::DetectorService> {
    * @param options Configuration options containing server address
    */
   explicit DetectorClient(aa::shared::Options options)
-      : RpcClient{options.GetAddress()}, options_{std::move(options)} {}
+      : RpcClient{options.Get<std::string>("address")},
+        options_{std::move(options)} {}
 
   grpc::Status CheckHealth(const aa::shared::CheckHealthRequest& request,
                            aa::shared::CheckHealthResponse* response) {

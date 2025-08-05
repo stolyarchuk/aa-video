@@ -21,8 +21,10 @@ namespace aa::shared {
  *     return -1;
  * }
  *
- * std::string input = options.GetInput();
- * int width = options.GetWidth();
+ * std::string input = options.Get<std::string>("input");
+ * int width = options.Get<int>("width");
+ * double confidence = options.Get<double>("confidence");
+ * bool verbose = options.IsVerbose();
  * @endcode
  */
 class Options {
@@ -33,7 +35,7 @@ class Options {
    * @param argc Number of command line arguments
    * @param argv Array of command line argument strings
    */
-  Options(int argc, const char* const argv[]);
+  Options(int argc, const char* const argv[], std::string_view name);
 
   /**
    * @brief Check if the command line arguments are valid
@@ -49,53 +51,17 @@ class Options {
   void PrintHelp() const;
 
   /**
-   * @brief Get the input file/camera path
+   * @brief Get a configuration value by parameter name
    *
-   * @return std::string Input path (file path, camera index, or video stream)
+   * @tparam T The type to retrieve (std::string, int, double, bool)
+   * @param parameter_name The name of the parameter (e.g., "input", "width",
+   * "confidence")
+   * @return T The parameter value of the specified type
    */
-  std::string GetInput() const;
-
-  /**
-   * @brief Get the output file path
-   *
-   * @return std::string Output file path
-   */
-  std::string GetOutput() const;
-
-  /**
-   * @brief Get the frame width for processing
-   *
-   * @return int Frame width in pixels
-   */
-  int GetWidth() const;
-
-  /**
-   * @brief Get the frame height for processing
-   *
-   * @return int Frame height in pixels
-   */
-  int GetHeight() const;
-
-  /**
-   * @brief Get the confidence threshold
-   *
-   * @return double Confidence threshold value (0.0 - 1.0)
-   */
-  double GetConfidenceThreshold() const;
-
-  /**
-   * @brief Get the detection model path
-   *
-   * @return std::string Path to the detection model file
-   */
-  std::string GetModelPath() const;
-
-  /**
-   * @brief Get the server address for gRPC communication
-   *
-   * @return std::string Server address (e.g., "localhost:50051")
-   */
-  std::string GetAddress() const;
+  template <typename T>
+  T Get(const std::string& parameter_name) const {
+    return parser_.get<T>(parameter_name);
+  }
 
   /**
    * @brief Check if verbose output is enabled
@@ -108,6 +74,7 @@ class Options {
  private:
   cv::CommandLineParser parser_;
   bool is_valid_;
+  std::string instance_name_;
 
   /**
    * @brief Initialize the command line parser with option definitions
@@ -115,7 +82,8 @@ class Options {
    * @param argc Number of command line arguments
    * @param argv Array of command line argument strings
    */
-  void InitializeParser(int argc, const char* const argv[]);
+  void InitializeParser(int argc, const char* const argv[],
+                        std::string_view name);
 
   /**
    * @brief Validate the parsed arguments

@@ -23,6 +23,10 @@ add_executable(test_detector_server
     test_detector_server.cpp
 )
 
+add_executable(test_options
+    test_options.cpp
+)
+
 # Link against required libraries for signal set tests
 target_link_libraries(test_signal_set
     aa_shared
@@ -44,9 +48,19 @@ target_link_libraries(test_detector_server
     pthread
 )
 
+# Link against required libraries for options tests
+target_link_libraries(test_options
+    aa_shared
+    ${OpenCV_LIBS}
+    GTest::GTest
+    GTest::Main
+    pthread
+)
+
 # Add the tests to CTest
 add_test(NAME SignalSetTests COMMAND test_signal_set)
 add_test(NAME DetectorServerTests COMMAND test_detector_server)
+add_test(NAME OptionsTests COMMAND test_options)
 
 # Set test properties
 set_tests_properties(SignalSetTests PROPERTIES

@@ -10,7 +10,8 @@ namespace aa::server {
 
 DetectorServer::DetectorServer(aa::shared::Options options)
     : options_{std::move(options)} {
-  service_ = std::make_unique<DetectorServiceImpl>(options_.GetAddress());
+  service_ = std::make_unique<DetectorServiceImpl>(
+      options_.Get<std::string>("address"));
 }
 
 void DetectorServer::Initialize() {
@@ -43,7 +44,8 @@ grpc::Status DetectorServer::CheckHealth(
 void DetectorServer::InitializeNetwork() {
   // Load ResNet model first
   if (!LoadModel()) {
-    throw std::runtime_error("Failed to initialize ResNet model");
+    throw std::runtime_error("Failed to initialize model " +
+                             options_.Get<cv::String>("model"));
   }
 
   // Set DNN backend and target after loading model
@@ -53,7 +55,7 @@ void DetectorServer::InitializeNetwork() {
 
 bool DetectorServer::LoadModel() {
   try {
-    std::string model_path = options_.GetModelPath();
+    auto model_path = options_.Get<std::string>("model");
     AA_LOG_INFO("Loading model from: " << model_path);
 
     dnn_network_ = cv::dnn::readNetFromONNX(model_path);

@@ -2,11 +2,14 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Debug Application",
+      "name": "Debug Server",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/build/test_task",
-      "args": [],
+      "program": "${workspaceFolder}/build/server/detector_server",
+      "args": [
+        "--model",
+        "asdsadsdsadf"
+      ],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}",
       "environment": [],
