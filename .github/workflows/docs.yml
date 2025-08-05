@@ -22,6 +22,34 @@ jobs:
         with:
           fetch-depth: 0 # Fetch full history for proper documentation
 
+      - name: Cache APT packages
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/apt
+          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/docs.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-apt-
+
+      - name: Cache CMake build
+        uses: actions/cache@v4
+        with:
+          path: |
+            build
+            ~/.cmake
+          key: ${{ runner.os }}-cmake-${{ hashFiles('**/CMakeLists.txt', 'cmake/**') }}
+          restore-keys: |
+            ${{ runner.os }}-cmake-
+
+      - name: Cache documentation artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            build/docs
+            build/_deps
+          key: ${{ runner.os }}-docs-${{ hashFiles('**/CMakeLists.txt', 'Doxyfile', 'shared/**', 'client/**', 'server/**') }}
+          restore-keys: |
+            ${{ runner.os }}-docs-
+
       - name: Install dependencies
         run: |
           sudo apt-get update
@@ -74,7 +102,14 @@ jobs:
             libtbbmalloc2 \
             libdc1394-dev \
             libgtest-dev \
-            libgmock-dev
+            libgmock-dev \
+            ccache
+
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ runner.os }}-ccache-docs
+          max-size: 2G
 
       - name: Configure CMake
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_DOCUMENTATION=ON
