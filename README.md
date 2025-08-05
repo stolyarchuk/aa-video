@@ -233,6 +233,7 @@ cmake -B build -S . -DBUILD_DOCUMENTATION=ON
 
 # Build documentation
 cmake --build build --target docs
+cmake --build build --target docs
 
 # Open documentation in browser
 xdg-open build/docs/html/index.html

@@ -100,6 +100,7 @@ This is a modern C++ project using CMake as the build system. Please follow thes
 - Document all public classes and methods
 - Keep comments concise but informative
 - Generate docs with: `cmake -B build -DBUILD_DOCUMENTATION=ON && cmake --build build --target docs`
+- Generate docs with: `cmake -B build -DBUILD_DOCUMENTATION=ON && cmake --build build --target docs`
 
 ## Code Formatting
 
@@ -160,7 +161,7 @@ class ExampleClass {
 namespace aa {
 
 // Pass by value and move for expensive-to-copy types
-ExampleClass::ExampleClass(std::string name, std::vector<int> data) 
+ExampleClass::ExampleClass(std::string name, std::vector<int> data)
     : name_{std::move(name)}, data_{std::move(data)} {
   if (name_.empty()) {
     throw std::invalid_argument("Name cannot be empty");
