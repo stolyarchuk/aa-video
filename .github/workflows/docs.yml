@@ -28,7 +28,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y doxygen graphviz cmake build-essential pkg-config \
-            libprotobuf-dev protobuf-compiler libgrpc-dev libgrpc++-dev \
+            libprotobuf-dev protobuf-compiler protobuf-compiler-grpc \
+            libgrpc-dev libgrpc++-dev libgrpc++1 \
             libopencv-dev
 
       - name: Configure CMake
