@@ -5,6 +5,8 @@
 #include <opencv2/imgproc.hpp>
 
 #include "logging.h"
+#include "polygon.h"
+#include "frame.h"
 
 namespace aa::server {
 
@@ -81,7 +83,6 @@ bool DetectorServer::LoadModel() {
 }
 
 cv::Mat DetectorServer::PreprocessFrame(const cv::Mat& frame) {
-  // Modern ResNet preprocessing parameters (ImageNet standard)
   const cv::Size network_input_size(224, 224);  // Standard ResNet input size
   const cv::Scalar mean_values(123.675, 116.28, 103.53);  // ImageNet mean (BGR)
   const double scale_factor = 1.0 / 255.0;                // Normalize to [0,1]
@@ -96,8 +97,7 @@ cv::Mat DetectorServer::PreprocessFrame(const cv::Mat& frame) {
         network_input_size,  // Target size for network input
         mean_values,         // Mean subtraction values (BGR order)
         swap_rb,             // Swap red and blue channels (BGR -> RGB)
-        crop,                // Center crop
-        CV_32F               // Output data type (float32)
+        crop                 // Center crop
     );
 
     // Verify blob dimensions [N, C, H, W] = [1, 3, 224, 224]
@@ -184,27 +184,43 @@ std::vector<cv::Rect> DetectorServer::PostprocessDetections(
 }
 
 grpc::Status DetectorServer::ProcessFrame(
-    const aa::proto::ProcessFrameRequest* /* request */,
-    aa::proto::ProcessFrameResponse* /* response */) const {
+    const aa::proto::ProcessFrameRequest* request,
+    aa::proto::ProcessFrameResponse* response) const {
   try {
-    // TODO: Extract cv::Mat from request frame data
-    // For now, create a dummy frame for testing
-    cv::Mat input_frame = cv::Mat::zeros(480, 640, CV_8UC3);
+    if (request->polygons_size() == 0) {
+      AA_LOG_ERROR("No polygons provided in request");
+      response->set_success(false);
+    }
+
+    std::vector<aa::shared::Polygon> polygons{request->polygons_size()};
+    for (int i = 0; i < request->polygons_size(); ++i) {
+      polygons[i] = aa::shared::Polygon::FromProto(request->polygons(i));
+    }
+
+    std::sort(polygons.begin(), polygons.end(),
+              [](const aa::shared::Polygon& a, const aa::shared::Polygon& b) {
+                return a.GetPriority() > b.GetPriority();
+              });
+
+    auto frame = aa::shared::Frame::FromProto(request->frame());
+    cv::Mat input_frame = frame.ToMat();
 
     // Step 1: Preprocess frame for neural network
     cv::Mat preprocessed_blob =
         const_cast<DetectorServer*>(this)->PreprocessFrame(input_frame);
+
     if (preprocessed_blob.empty()) {
-      return grpc::Status(grpc::StatusCode::INTERNAL,
-                          "Failed to preprocess frame");
+      AA_LOG_ERROR("Failed to preprocess frame");
+      response->set_success(false);
     }
 
     // Step 2: Run inference using ResNet model
     cv::Mat network_output =
         const_cast<DetectorServer*>(this)->RunInference(preprocessed_blob);
+
     if (network_output.empty()) {
-      return grpc::Status(grpc::StatusCode::INTERNAL,
-                          "Failed to run inference");
+      AA_LOG_ERROR("Failed to run inference on preprocessed blob");
+      response->set_success(false);
     }
 
     // Step 3: Post-process results to extract detections
@@ -220,7 +236,6 @@ grpc::Status DetectorServer::ProcessFrame(
                                                        << " detections.");
 
     return grpc::Status::OK;
-
   } catch (const std::exception& e) {
     AA_LOG_ERROR("Error processing frame: " << e.what());
     return grpc::Status(grpc::StatusCode::INTERNAL, "Frame processing failed");
