@@ -221,9 +221,6 @@ std::vector<Detection> DetectorServer::PostprocessDetections(
       return detections;
     }
 
-    LogPolygonConfiguration(polygons);
-    LogNetworkOutput(network_output);
-
     std::vector<Detection> raw_detections = ParseNetworkOutput(network_output);
     std::vector<Detection> nms_detections =
         ApplyNonMaximumSuppression(raw_detections);
@@ -641,27 +638,6 @@ std::vector<const aa::shared::Polygon*> DetectorServer::FindContainingPolygons(
   }
 
   return containing_polygons;
-}
-
-void DetectorServer::LogPolygonConfiguration(
-    const std::vector<aa::shared::Polygon>& polygons) {
-  AA_LOG_DEBUG("Polygon-based detection configuration:");
-  for (size_t i = 0; i < polygons.size(); ++i) {
-    const auto& polygon = polygons[i];
-    AA_LOG_DEBUG("Polygon "
-                 << i << ": type=" << static_cast<int>(polygon.GetType())
-                 << ", priority=" << polygon.GetPriority()
-                 << ", target_classes_count="
-                 << polygon.GetTargetClasses().size()
-                 << ", vertices_count=" << polygon.GetVertices().size());
-  }
-}
-
-void DetectorServer::LogNetworkOutput(const cv::Mat& network_output) {
-  AA_LOG_DEBUG("Network output dims: " << network_output.dims);
-  for (int i = 0; i < network_output.dims; ++i) {
-    AA_LOG_DEBUG("Dimension " << i << ": " << network_output.size[i]);
-  }
 }
 
 bool DetectorServer::ShouldIncludeDetection(
