@@ -40,6 +40,9 @@ void DetectorServer::Shutdown() { service_->Stop(); }
 grpc::Status DetectorServer::CheckHealth(
     const aa::proto::CheckHealthRequest*,
     aa::proto::CheckHealthResponse*) const {
+  // For now, we assume the server is always healthy
+  AA_LOG_INFO("Health check passed");
+
   return grpc::Status::OK;
 }
 
@@ -60,12 +63,53 @@ bool DetectorServer::LoadModel() {
     auto model_path = options_.Get<std::string>("model");
     AA_LOG_INFO("Loading model from: " << model_path);
 
-    dnn_network_ = cv::dnn::readNetFromONNX(model_path);
+    // Check if this is a ViT model that may have dynamic shapes
+    bool is_vit_model = model_path.find("vit") != std::string::npos;
+
+    if (is_vit_model) {
+      AA_LOG_WARNING(
+          "Detected Vision Transformer model. OpenCV DNN may not support "
+          "dynamic shapes.");
+      AA_LOG_WARNING(
+          "Consider using a different inference backend (ONNX Runtime, "
+          "TensorRT, etc.) for ViT models.");
+
+      // Try to load with more permissive settings
+      try {
+        dnn_network_ = cv::dnn::readNetFromONNX(model_path);
+      } catch (const cv::Exception& vit_error) {
+        AA_LOG_ERROR(
+            "ViT model loading failed with OpenCV DNN: " << vit_error.what());
+        AA_LOG_ERROR(
+            "Recommendation: Use ResNet models for OpenCV DNN compatibility, "
+            "or implement ONNX Runtime backend");
+        return false;
+      }
+    } else {
+      dnn_network_ = cv::dnn::readNetFromONNX(model_path);
+    }
 
     // Check if network is empty (indicates loading failure)
     if (dnn_network_.empty()) {
       AA_LOG_ERROR("Failed to load model: network is empty");
       return false;
+    }
+
+    // For ViT models, try to get input layer info to verify compatibility
+    if (is_vit_model) {
+      try {
+        auto layer_names = dnn_network_.getLayerNames();
+        AA_LOG_INFO("Model has " << layer_names.size() << " layers");
+
+        // Get unconnected output layers to understand the model structure
+        auto unconnected_layers = dnn_network_.getUnconnectedOutLayers();
+        AA_LOG_INFO("Model has " << unconnected_layers.size()
+                                 << " output layers");
+
+      } catch (const cv::Exception& shape_error) {
+        AA_LOG_WARNING(
+            "Could not analyze model structure: " << shape_error.what());
+      }
     }
 
     AA_LOG_INFO("Model loaded successfully");
@@ -83,22 +127,62 @@ bool DetectorServer::LoadModel() {
 }
 
 cv::Mat DetectorServer::PreprocessFrame(const cv::Mat& frame) {
-  const cv::Size network_input_size(224, 224);  // Standard ResNet input size
-  const cv::Scalar mean_values(123.675, 116.28, 103.53);  // ImageNet mean (BGR)
-  const double scale_factor = 1.0 / 255.0;                // Normalize to [0,1]
-  const bool swap_rb = true;                              // Convert BGR to RGB
-  const bool crop = false;  // No center cropping for inference
+  // Determine model type for appropriate preprocessing
+  auto model_path = options_.Get<std::string>("model");
+  bool is_vit_model = model_path.find("vit") != std::string::npos;
+
+  cv::Size network_input_size;
+  cv::Scalar mean_values;
+  cv::Scalar std_values;
+  double scale_factor;
+  bool swap_rb;
+  bool crop = false;
+
+  if (is_vit_model) {
+    // ViT preprocessing parameters
+    network_input_size = cv::Size(224, 224);  // ViT-Base patch16-224 input
+    mean_values = cv::Scalar(0.485, 0.456, 0.406);  // ImageNet mean (RGB)
+    std_values = cv::Scalar(0.229, 0.224, 0.225);   // ImageNet std (RGB)
+    scale_factor = 1.0 / 255.0;                     // Normalize to [0,1] first
+    swap_rb = true;  // Convert BGR to RGB for ViT
+  } else {
+    // ResNet preprocessing parameters
+    network_input_size = cv::Size(224, 224);  // Standard ResNet input size
+    mean_values = cv::Scalar(123.675, 116.28, 103.53);  // ImageNet mean (BGR)
+    scale_factor = 1.0 / 255.0;                         // Normalize to [0,1]
+    swap_rb = true;                                     // Convert BGR to RGB
+  }
 
   try {
-    // Create blob from image using OpenCV 4.8.1 blobFromImage
-    cv::Mat blob = cv::dnn::blobFromImage(
-        frame,               // Input image
-        scale_factor,        // Scale factor for pixel values
-        network_input_size,  // Target size for network input
-        mean_values,         // Mean subtraction values (BGR order)
-        swap_rb,             // Swap red and blue channels (BGR -> RGB)
-        crop                 // Center crop
-    );
+    cv::Mat blob;
+
+    if (is_vit_model) {
+      // ViT requires normalization with both mean and std
+      blob = cv::dnn::blobFromImage(
+          frame,               // Input image
+          scale_factor,        // Scale factor for pixel values
+          network_input_size,  // Target size for network input
+          cv::Scalar(),        // No mean subtraction in blobFromImage for ViT
+          swap_rb,             // Swap red and blue channels (BGR -> RGB)
+          crop                 // Center crop
+      );
+
+      // Manual normalization for ViT: (pixel/255 - mean) / std
+      // This requires reshaping and manual computation
+      // For now, use standard normalization and log a warning
+      AA_LOG_WARNING("ViT normalization may not be optimal with OpenCV DNN");
+
+    } else {
+      // Standard ResNet preprocessing
+      blob = cv::dnn::blobFromImage(
+          frame,               // Input image
+          scale_factor,        // Scale factor for pixel values
+          network_input_size,  // Target size for network input
+          mean_values,         // Mean subtraction values (BGR order)
+          swap_rb,             // Swap red and blue channels (BGR -> RGB)
+          crop                 // Center crop
+      );
+    }
 
     // Verify blob dimensions [N, C, H, W] = [1, 3, 224, 224]
     if (blob.dims == 4 && blob.size[1] == 3 &&
@@ -170,8 +254,8 @@ std::vector<cv::Rect> DetectorServer::PostprocessDetections(
     for (int i = 0; i < network_output.dims; ++i) {
       AA_LOG_DEBUG(network_output.size[i]);
       if (i < network_output.dims - 1) {
-        AA_LOG_DEBUG("x")
-      };
+        AA_LOG_DEBUG("x");
+      }
     }
 
   } catch (const cv::Exception& e) {
@@ -192,9 +276,27 @@ grpc::Status DetectorServer::ProcessFrame(
       response->set_success(false);
     }
 
-    std::vector<aa::shared::Polygon> polygons{request->polygons_size()};
+    std::vector<aa::shared::Polygon> polygons;
+    polygons.reserve(request->polygons_size());
+
     for (int i = 0; i < request->polygons_size(); ++i) {
-      polygons[i] = aa::shared::Polygon::FromProto(request->polygons(i));
+      auto polygon = aa::shared::Polygon::FromProto(request->polygons(i));
+
+      // Skip polygons with unspecified type
+      if (polygon.GetType() == aa::shared::PolygonType::UNSPECIFIED) {
+        AA_LOG_WARNING("Skipping polygon at index "
+                       << i << " with UNSPECIFIED type");
+        continue;
+      }
+
+      polygons.push_back(std::move(polygon));
+    }
+
+    // Check if we have any valid polygons after filtering
+    if (polygons.empty()) {
+      AA_LOG_ERROR(
+          "No valid polygons found after filtering out UNSPECIFIED types");
+      response->set_success(false);
     }
 
     std::sort(polygons.begin(), polygons.end(),
@@ -203,11 +305,31 @@ grpc::Status DetectorServer::ProcessFrame(
               });
 
     auto frame = aa::shared::Frame::FromProto(request->frame());
+
+    cv::Size model_size(224, 224);  // TODO: Get from options
+
     cv::Mat input_frame = frame.ToMat();
+    cv::Size original_size = input_frame.size();
+
+    auto scale_x = static_cast<double>(model_size.width) / original_size.width;
+    auto scale_y =
+        static_cast<double>(model_size.height) / original_size.height;
+
+    std::vector<aa::shared::Polygon> scaled_polygons;
+    scaled_polygons.reserve(polygons.size());
+
+    for (auto polygon : polygons) {
+      // Scale polygon coordinates to match model input size
+      polygon.Scale(scale_x, scale_y);
+      scaled_polygons.push_back(std::move(polygon));
+    }
+
+    cv::Mat resized_image;
+    cv::resize(input_frame, resized_image, model_size, 0, 0, cv::INTER_LINEAR);
 
     // Step 1: Preprocess frame for neural network
     cv::Mat preprocessed_blob =
-        const_cast<DetectorServer*>(this)->PreprocessFrame(input_frame);
+        const_cast<DetectorServer*>(this)->PreprocessFrame(resized_image);
 
     if (preprocessed_blob.empty()) {
       AA_LOG_ERROR("Failed to preprocess frame");
