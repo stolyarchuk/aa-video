@@ -72,7 +72,7 @@ int main(int argc, char* argv[]) {
       0.0, static_cast<double>(image.rows / 10));  // Y within image height/10
   std::uniform_int_distribution<> priority_dist(1, 10);  // Random priority
   std::uniform_int_distribution<> type_dist(1, 2);  // 1=INCLUSION, 2=EXCLUSION
-  std::vector<int32_t> class_options = {17, 75, 76, 78, 79, 80};
+  std::vector<int32_t> class_options = {17, 75, 76, 78, 79};
   std::uniform_int_distribution<> class_idx_dist(
       0, static_cast<int>(class_options.size() - 1));
   std::uniform_int_distribution<> num_classes_dist(
