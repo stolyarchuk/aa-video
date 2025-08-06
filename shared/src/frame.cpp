@@ -12,6 +12,54 @@ Frame::Frame(int32_t rows, int32_t cols, int32_t elm_type, int32_t elm_size,
       elm_size_{elm_size},
       data_{std::move(data)} {}
 
+Frame::Frame(const Frame& other)
+    : rows_{other.rows_},
+      cols_{other.cols_},
+      elm_type_{other.elm_type_},
+      elm_size_{other.elm_size_},
+      data_{other.data_} {}  // Deep copy of vector
+
+Frame::Frame(Frame&& other) noexcept
+    : rows_{other.rows_},
+      cols_{other.cols_},
+      elm_type_{other.elm_type_},
+      elm_size_{other.elm_size_},
+      data_{std::move(other.data_)} {
+  // Reset moved-from object to valid state
+  other.rows_ = 0;
+  other.cols_ = 0;
+  other.elm_type_ = 0;
+  other.elm_size_ = 0;
+}
+
+Frame& Frame::operator=(const Frame& other) {
+  if (this != &other) {  // Self-assignment check
+    rows_ = other.rows_;
+    cols_ = other.cols_;
+    elm_type_ = other.elm_type_;
+    elm_size_ = other.elm_size_;
+    data_ = other.data_;  // Deep copy of vector
+  }
+  return *this;
+}
+
+Frame& Frame::operator=(Frame&& other) noexcept {
+  if (this != &other) {  // Self-assignment check
+    rows_ = other.rows_;
+    cols_ = other.cols_;
+    elm_type_ = other.elm_type_;
+    elm_size_ = other.elm_size_;
+    data_ = std::move(other.data_);
+
+    // Reset moved-from object to valid state
+    other.rows_ = 0;
+    other.cols_ = 0;
+    other.elm_type_ = 0;
+    other.elm_size_ = 0;
+  }
+  return *this;
+}
+
 Frame::Frame(const cv::Mat& mat)
     : rows_{mat.rows},
       cols_{mat.cols},

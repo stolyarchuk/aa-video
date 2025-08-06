@@ -30,6 +30,32 @@ class Polygon {
   Polygon() = default;
 
   /**
+   * @brief Copy constructor - performs deep copy
+   * @param other Polygon to copy from
+   */
+  Polygon(const Polygon& other);
+
+  /**
+   * @brief Move constructor
+   * @param other Polygon to move from
+   */
+  Polygon(Polygon&& other) noexcept;
+
+  /**
+   * @brief Copy assignment operator - performs deep copy
+   * @param other Polygon to copy from
+   * @return Reference to this Polygon
+   */
+  Polygon& operator=(const Polygon& other);
+
+  /**
+   * @brief Move assignment operator
+   * @param other Polygon to move from
+   * @return Reference to this Polygon
+   */
+  Polygon& operator=(Polygon&& other) noexcept;
+
+  /**
    * @brief Constructor with polygon parameters
    * @param vertices List of points defining the polygon boundary
    * @param type Type of polygon (inclusion or exclusion)

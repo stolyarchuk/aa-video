@@ -11,6 +11,46 @@ Polygon::Polygon(std::vector<Point> vertices, PolygonType type,
       priority_{priority},
       target_classes_{std::move(target_classes)} {}
 
+Polygon::Polygon(const Polygon& other)
+    : vertices_{other.vertices_},  // Deep copy of vector of Points
+      type_{other.type_},
+      priority_{other.priority_},
+      target_classes_{other.target_classes_} {}  // Deep copy of vector
+
+Polygon::Polygon(Polygon&& other) noexcept
+    : vertices_{std::move(other.vertices_)},
+      type_{other.type_},
+      priority_{other.priority_},
+      target_classes_{std::move(other.target_classes_)} {
+  // Reset moved-from object to valid state
+  other.type_ = PolygonType::UNSPECIFIED;
+  other.priority_ = 0;
+}
+
+Polygon& Polygon::operator=(const Polygon& other) {
+  if (this != &other) {           // Self-assignment check
+    vertices_ = other.vertices_;  // Deep copy of vector of Points
+    type_ = other.type_;
+    priority_ = other.priority_;
+    target_classes_ = other.target_classes_;  // Deep copy of vector
+  }
+  return *this;
+}
+
+Polygon& Polygon::operator=(Polygon&& other) noexcept {
+  if (this != &other) {  // Self-assignment check
+    vertices_ = std::move(other.vertices_);
+    type_ = other.type_;
+    priority_ = other.priority_;
+    target_classes_ = std::move(other.target_classes_);
+
+    // Reset moved-from object to valid state
+    other.type_ = PolygonType::UNSPECIFIED;
+    other.priority_ = 0;
+  }
+  return *this;
+}
+
 Polygon Polygon::FromProto(const ::aa::proto::Polygon& proto_polygon) {
   std::vector<Point> vertices;
   vertices.reserve(proto_polygon.vertices_size());

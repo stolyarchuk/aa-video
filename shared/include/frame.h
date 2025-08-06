@@ -22,6 +22,32 @@ class Frame {
   Frame() = default;
 
   /**
+   * @brief Copy constructor - performs deep copy
+   * @param other Frame to copy from
+   */
+  Frame(const Frame& other);
+
+  /**
+   * @brief Move constructor
+   * @param other Frame to move from
+   */
+  Frame(Frame&& other) noexcept;
+
+  /**
+   * @brief Copy assignment operator - performs deep copy
+   * @param other Frame to copy from
+   * @return Reference to this Frame
+   */
+  Frame& operator=(const Frame& other);
+
+  /**
+   * @brief Move assignment operator
+   * @param other Frame to move from
+   * @return Reference to this Frame
+   */
+  Frame& operator=(Frame&& other) noexcept;
+
+  /**
    * @brief Constructor with frame parameters
    * @param rows Number of rows (height)
    * @param cols Number of columns (width)
