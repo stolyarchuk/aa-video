@@ -367,8 +367,16 @@ std::vector<Detection> DetectorServer::ParseNetworkOutput(
     // Output format: [batch_size, num_detections, 85]
     // where 85 = 4 (bbox: x, y, w, h) + 1 (confidence) + 80 (COCO classes)
 
-    if (network_output.dims < 2) {
-      AA_LOG_ERROR("Invalid output dimensions: " << network_output.dims);
+    // Validate output dimensions - need at least 3D tensor
+    if (network_output.dims < 3) {
+      AA_LOG_ERROR("Invalid output dimensions: " << network_output.dims
+                                                 << " (expected 3)");
+      return detections;
+    }
+
+    // Validate data pointer
+    if (network_output.data == nullptr) {
+      AA_LOG_ERROR("Network output data is null");
       return detections;
     }
 
@@ -378,6 +386,19 @@ std::vector<Detection> DetectorServer::ParseNetworkOutput(
 
     int num_detections = network_output.size[1];
     int detection_size = network_output.size[2];  // Should be 85
+
+    // Validate detection size - need at least 5 values (4 bbox + 1 confidence)
+    if (detection_size < 5) {
+      AA_LOG_ERROR("Invalid detection size: " << detection_size
+                                              << " (expected at least 5)");
+      return detections;
+    }
+
+    // Validate number of detections
+    if (num_detections <= 0) {
+      AA_LOG_WARNING("No detections in network output");
+      return detections;
+    }
 
     AA_LOG_DEBUG("Parsing output: " << num_detections << " detections, "
                                     << detection_size
@@ -390,6 +411,18 @@ std::vector<Detection> DetectorServer::ParseNetworkOutput(
 
     for (int i = 0; i < num_detections; ++i) {
       const float* detection_data = data + i * detection_size;
+
+      // Additional bounds check: ensure we don't exceed the data buffer
+      size_t expected_data_size = static_cast<size_t>(network_output.size[0]) *
+                                  network_output.size[1] *
+                                  network_output.size[2];
+      size_t current_offset = static_cast<size_t>(i * detection_size);
+
+      if (current_offset + detection_size > expected_data_size) {
+        AA_LOG_ERROR("Data access would exceed buffer bounds at detection "
+                     << i);
+        break;
+      }
 
       // Extract bbox coordinates (center_x, center_y, width, height)
       float center_x = detection_data[0];
