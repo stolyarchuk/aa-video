@@ -201,21 +201,6 @@ class DetectorServer {
                                const aa::shared::Polygon& polygon);
 
   /**
-   * @brief Log polygon configuration for debugging
-   *
-   * @param polygons Polygons to log
-   */
-  void LogPolygonConfiguration(
-      const std::vector<aa::shared::Polygon>& polygons);
-
-  /**
-   * @brief Log network output dimensions for debugging
-   *
-   * @param network_output Network output to log
-   */
-  void LogNetworkOutput(const cv::Mat& network_output);
-
-  /**
    * @brief Check the health of the server
    *
    * @param request Health check request
