@@ -97,6 +97,13 @@ class Polygon {
     target_classes_ = std::move(target_classes);
   }
 
+  /**
+   * @brief Scale polygon vertices by given factors
+   * @param scale_x Scaling factor for X coordinates
+   * @param scale_y Scaling factor for Y coordinates
+   */
+  void Scale(double scale_x, double scale_y);
+
  private:
   std::vector<Point>
       vertices_;  ///< List of points defining the polygon boundary

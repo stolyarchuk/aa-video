@@ -93,4 +93,11 @@ Polygon Polygon::FromProto(const ::aa::proto::Polygon& proto_polygon) {
   return proto_polygon;
 }
 
+void Polygon::Scale(double scale_x, double scale_y) {
+  for (auto& vertex : vertices_) {
+    vertex.SetX(vertex.GetX() * scale_x);
+    vertex.SetY(vertex.GetY() * scale_y);
+  }
+}
+
 }  // namespace aa::shared
