@@ -34,6 +34,7 @@ class Options {
    *
    * @param argc Number of command line arguments
    * @param argv Array of command line argument strings
+   * @param name Application instance name for help message
    */
   Options(int argc, const char* const argv[], std::string_view name);
 
@@ -81,6 +82,7 @@ class Options {
    *
    * @param argc Number of command line arguments
    * @param argv Array of command line argument strings
+   * @param name Application instance name for configuration
    */
   void InitializeParser(int argc, const char* const argv[],
                         std::string_view name);

@@ -1,6 +1,6 @@
 # AA Video Processing System
 
-A production-ready C++23 video processing system featuring gRPC-based client-server architecture for real-time object detection using YOLOv7 neural networks. The system provides advanced polygon-based detection zones with priority-based filtering, comprehensive memory safety, and enterprise-grade deployment capabilities.
+A proof-of-concept demonstrating AI Driven Development for building complex C++23 video processing systems from scratch. Features gRPC-based client-server architecture for real-time object detection using YOLOv7 neural networks. The system provides advanced polygon-based detection zones with priority-based filtering, comprehensive memory safety, and enterprise-grade deployment capabilities.
 
 ## ✨ Key Features
 
@@ -27,6 +27,7 @@ A production-ready C++23 video processing system featuring gRPC-based client-ser
 - **Thread-safe Logging System** using AA_LOG_* macros with configurable levels
 - **Comprehensive Test Suite** with 100% pass rate across 50+ unit tests
 - **Multi-platform Docker Images** with optimized caching for 60-80% faster builds
+- **Complete API Documentation** with Doxygen docstrings for all classes and methods
 
 ## 🔄 Recent Major Updates
 
@@ -45,6 +46,7 @@ A production-ready C++23 video processing system featuring gRPC-based client-ser
 - **Exception Safety Guarantees** with proper error recovery and resource cleanup
 - **Buffer Overflow Protection** in all network operations and data processing
 - **Comprehensive Test Coverage** with 100% pass rate across all polygon filtering scenarios
+- **Complete Doxygen Documentation** with docstrings for all classes, methods, and public interfaces
 
 ## Project Structure
 
@@ -819,51 +821,205 @@ perf: optimize detection coordinate transformation algorithms
 
 ### GitHub Actions Workflows
 
-The project includes comprehensive automation with multiple optimized workflows:
+The project includes comprehensive automation with optimized containerized deployment:
 
-#### Docker Build & Deployment
+#### Docker Build & Deployment Pipeline
 
-- **Multi-stage builds** with production and development targets
-- **Multi-platform support** for AMD64 and ARM64 architectures
-- **Advanced caching** with GitHub Actions cache and Docker BuildKit
+Located at `.github/workflows/docker.yml`, featuring:
+
+- **Multi-stage Docker builds** with optimized production and development targets
+- **Multi-platform support** for linux/amd64 and linux/arm64 architectures
+- **Advanced caching strategies**:
+  - Docker BuildKit layer caching with GitHub Actions cache
+  - ccache integration for C++ compilation caching
+  - Persistent cache across workflow runs with intelligent restoration
 - **Automated publishing** to GitHub Container Registry (ghcr.io)
-- **Performance optimization** with 60-80% faster subsequent builds
+- **Smart tagging strategy**:
+  - Branch-based tags (main, dev)
+  - Semantic version tags (v1.0.0, v1.0, v1)
+  - Pull request tags for testing
+  - Latest tag for production releases
 
-#### Documentation Generation
+#### Build Optimization Features
 
-- **Automated API documentation** with Doxygen and GitHub Pages
-- **Comprehensive dependency management** matching Docker environment
-- **Multi-layer caching** for optimal build performance
-- **Private method documentation** for complete API coverage
+- **ccache Integration**: Speeds up C++ compilation by 60-80% on subsequent builds
+- **Docker Layer Caching**: Reuses unchanged layers between builds
+- **Conditional Platform Building**: AMD64 only for PR testing, multi-platform for releases
+- **Background Process Management**: Proper cleanup and cache rotation
+- **Image Testing**: Automated container validation for pull requests
 
-#### Continuous Integration & Testing
+#### Container Registry & Distribution
 
-- **Comprehensive test execution** with all 50+ unit tests
-- **Memory safety validation** with bounds checking verification
-- **Build verification** across multiple configurations
-- **Automated quality gates** preventing regressions
-
-### Container Registry
-
-Pre-built images are automatically published and tagged:
+Pre-built images automatically published with intelligent tagging:
 
 ```bash
-# Latest stable release
-ghcr.io/stolyarchuk/aa-test:latest
+# Production images
+ghcr.io/stolyarchuk/aa-test:latest          # Latest stable from main branch
+ghcr.io/stolyarchuk/aa-test:main            # Main branch builds
+ghcr.io/stolyarchuk/aa-test:v1.0.0          # Semantic version releases
 
-# Development builds from main branch
-ghcr.io/stolyarchuk/aa-test:dev
+# Development images
+ghcr.io/stolyarchuk/aa-test:dev             # Development builds from main
+ghcr.io/stolyarchuk/aa-test:main-dev        # Development target from main
+ghcr.io/stolyarchuk/aa-test:pr-123          # Pull request testing images
 
-# Semantic versioning for releases
-ghcr.io/stolyarchuk/aa-test:v1.0.0
+# Branch-specific builds
+ghcr.io/stolyarchuk/aa-test:feature-branch  # Feature branch builds
 ```
 
-### Performance Metrics
+#### Performance Metrics & Optimization
 
-- **Build time**: ~5-8 minutes (cold), ~2-3 minutes (cached)
-- **Image size**: ~200MB (production), ~800MB (development)
-- **Test execution**: ~30-45 seconds for full test suite
-- **Documentation generation**: ~3-5 minutes with comprehensive coverage
+- **Build time**: ~5-8 minutes (cold build), ~2-3 minutes (with caching)
+- **Image sizes**:
+  - Production: ~400MB (Ubuntu 24.04 + runtime deps)
+  - Development: ~1.2GB (includes full C++ toolchain + docs)
+- **Cache efficiency**: 60-80% build time reduction with ccache
+- **Multi-arch build**: ARM64 support for edge deployment scenarios
+
+#### Workflow Triggers & Automation
+
+The Docker workflow automatically triggers on:
+
+- **Push events**: main and dev branches, version tags (v*.*.*)
+- **Pull requests**: targeting main branch (AMD64 testing only)
+- **Manual dispatch**: For on-demand builds and testing
+- **Tag releases**: Automatic semantic versioning and multi-platform builds
+
+#### Security & Package Management
+
+- **Automated cleanup**: Removes old untagged container versions (keeps 10 latest)
+- **Secure registry authentication**: GitHub token-based authentication
+- **Package permissions**: Read/write access for repository contributors
+- **Vulnerability scanning**: Container images scanned for security issues
+
+### Development Integration
+
+#### Local Development with Docker
+
+```bash
+# Use development container with full toolchain
+docker pull ghcr.io/stolyarchuk/aa-test:dev
+
+# Run interactive development environment
+docker run -it --rm \
+    -v $(pwd):/workspace \
+    -w /workspace \
+    -p 50051:50051 \
+    ghcr.io/stolyarchuk/aa-test:dev \
+    /bin/bash
+
+# Build and test inside container
+cmake -B build -S . -DCMAKE_BUILD_TYPE=Debug
+cmake --build build --parallel $(nproc)
+ctest --test-dir build --output-on-failure
+```
+
+#### Production Deployment
+
+```bash
+# Pull and run production server
+docker pull ghcr.io/stolyarchuk/aa-test:latest
+
+# Start detector server with model mounting
+docker run -d \
+    --name aa-detector-server \
+    -p 50051:50051 \
+    -v ./models:/app/models:ro \
+    -v ./input:/app/input:ro \
+    ghcr.io/stolyarchuk/aa-test:latest \
+    detector_server \
+    --model=/app/models/yolov7.weights \
+    --cfg=/app/models/yolov7.cfg \
+    --address=0.0.0.0:50051 \
+    --width=640 --height=640 \
+    --verbose=true
+```
+
+#### Comprehensive API Documentation
+
+The codebase includes comprehensive **Doxygen documentation** with:
+
+- **Complete class documentation**: All classes have detailed Doxygen docstrings
+- **Method documentation**: Parameters, return values, and usage examples
+- **Memory safety annotations**: `@memorysafe`, `@boundscheck`, `@nullsafe` tags
+- **Technology-specific tags**: `@grpc`, `@opencv`, `@yolo`, `@coco` annotations
+- **Thread safety indicators**: `@threadsafe` for concurrent access safety
+- **Performance considerations**: `@performance` tags for optimization notes
+- **Interactive documentation**: UML diagrams and cross-referenced source code
+
+Generate comprehensive API documentation:
+
+```bash
+# Configure with documentation enabled
+cmake -B build -S . -DBUILD_DOCUMENTATION=ON
+
+# Build documentation
+cmake --build build --target docs
+
+# Open documentation
+xdg-open build/docs/html/index.html
+```
+
+### Quality Assurance & Testing
+
+#### Automated Testing Pipeline
+
+- **Unit test execution**: 50+ comprehensive test cases with 100% pass rate
+- **Memory safety validation**: Valgrind integration for leak detection
+- **Build verification**: Multiple configurations (Debug/Release)
+- **Static analysis**: Clang-tidy integration for code quality
+- **Format checking**: clang-format for consistent code style
+
+#### Test Categories & Coverage
+
+- **Core functionality**: Server/client lifecycle and communication
+- **Memory safety**: Buffer overflow prevention and bounds checking
+- **Neural network integration**: Model loading and inference pipeline
+- **Polygon detection**: Geometry algorithms and filtering logic
+- **Protocol buffer serialization**: Message integrity and conversion
+- **Signal handling**: Graceful shutdown and resource cleanup
+
+### Deployment Architecture
+
+#### Container Architecture
+
+```text
+┌─────────────────────────────────────┐
+│         GitHub Actions              │
+│                                     │
+│  ┌─────────┐    ┌─────────────────┐ │
+│  │ Source  │ => │ Docker Build    │ │
+│  │ Code    │    │ - Multi-stage   │ │
+│  │ Changes │    │ - Multi-platform│ │
+│  └─────────┘    │ - Caching       │ │
+│                 └─────────────────┘ │
+│                          │          │
+│                          ▼          │
+│  ┌─────────────────────────────────┐ │
+│  │    GitHub Container Registry   │ │
+│  │                                 │ │
+│  │  ghcr.io/stolyarchuk/aa-test   │ │
+│  │  ├── :latest (production)      │ │
+│  │  ├── :dev (development)        │ │
+│  │  ├── :v1.0.0 (releases)        │ │
+│  │  └── :pr-* (testing)           │ │
+│  └─────────────────────────────────┘ │
+└─────────────────────────────────────┘
+            │
+            ▼
+┌─────────────────────────────────────┐
+│         Deployment Targets          │
+│                                     │
+│  ┌─────────────┐  ┌───────────────┐ │
+│  │Development  │  │  Production   │ │
+│  │Environment  │  │  Environment  │ │
+│  │             │  │               │ │
+│  │- Full tools │  │- Minimal deps │ │
+│  │- Debug info │  │- Optimized    │ │
+│  │- Testing    │  │- Secure       │ │
+│  └─────────────┘  └───────────────┘ │
+└─────────────────────────────────────┘
+```
 
 ## License
 

@@ -212,21 +212,29 @@ class DetectorServer {
   /**
    * @brief Check the health of the server
    *
-   * @param request Health check request
-   * @param response Health check response
+   * Provides a health check endpoint to verify server status and availability.
+   * Always returns success for a running server instance.
+   *
+   * @param request Health check request (pointer, typically empty)
+   * @param response Health check response (pointer to populate)
    * @return grpc::Status indicating success or failure
    */
-  grpc::Status CheckHealth(const aa::proto::CheckHealthRequest*,
-                           aa::proto::CheckHealthResponse*) const;
+  grpc::Status CheckHealth(const aa::proto::CheckHealthRequest* request,
+                           aa::proto::CheckHealthResponse* response) const;
   /**
    * @brief Process a frame for detection
    *
-   * @param request Frame processing request
-   * @param response Frame processing response
+   * Performs object detection on the provided frame using the loaded YOLO model
+   * and applies polygon-based filtering to the detection results.
+   *
+   * @param request Frame processing request (pointer containing frame and
+   * polygons)
+   * @param response Frame processing response (pointer to populate with
+   * results)
    * @return grpc::Status indicating success or failure
    */
-  grpc::Status ProcessFrame(const aa::proto::ProcessFrameRequest*,
-                            aa::proto::ProcessFrameResponse*) const;
+  grpc::Status ProcessFrame(const aa::proto::ProcessFrameRequest* request,
+                            aa::proto::ProcessFrameResponse* response) const;
 };
 
 }  // namespace aa::server
