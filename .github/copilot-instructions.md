@@ -21,6 +21,43 @@ This is a modern C++ project using CMake as the build system. Please follow thes
 - **Constructor Initialization**: Always use curly brackets `{}` for member initialization lists instead of parentheses `()`
 - **Constructor Parameters**: Use "pass by value and then move" idiom for constructor parameters where acceptable (e.g., for expensive-to-copy types like strings, containers, complex objects)
 
+## Header Ordering
+
+- **Always follow this include order** with blank lines between groups:
+  1. **System includes**: All standard library headers (e.g., `<chrono>`, `<mutex>`, `<unistd.h>`, `<iostream>`, `<string>`, `<vector>`)
+  2. **Third-party includes**: External library headers (e.g., `<opencv2/opencv.hpp>`, `<grpcpp/grpcpp.h>`, `<gtest/gtest.h>`)
+  3. **Local project includes**: Project-specific headers (e.g., `"detector_client.h"`, `"options.h"`, `"logging.h"`)
+- **Sort alphabetically** within each group
+- **Add blank lines** between groups for better readability
+- **Test files exception**: In test files, always place `<gtest/gtest.h>` first among all includes, before system includes
+- **Example**:
+  ```cpp
+  #include <chrono>
+  #include <iostream>
+  #include <string>
+  #include <thread>
+
+  #include <opencv2/opencv.hpp>
+  #include <grpcpp/grpcpp.h>
+
+  #include "detector_client.h"
+  #include "logging.h"
+  #include "options.h"
+  ```
+- **Test file example**:
+  ```cpp
+  #include <gtest/gtest.h>
+
+  #include <chrono>
+  #include <string>
+  #include <vector>
+
+  #include <opencv2/opencv.hpp>
+
+  #include "detector_server.h"
+  #include "options.h"
+  ```
+
 ## Header Guards
 
 - **Always use `#pragma once`** for header guards in all `.h` files
