@@ -24,6 +24,12 @@ class DetectorClient final : public RpcClient<aa::proto::DetectorService> {
                      response);
   }
 
+  grpc::Status ProcessFrame(const aa::proto::ProcessFrameRequest& request,
+                            aa::proto::ProcessFrameResponse* response) {
+    return DoRequest(&aa::proto::DetectorService::Stub::ProcessFrame, request,
+                     response);
+  }
+
  private:
   aa::shared::Options options_;
 };

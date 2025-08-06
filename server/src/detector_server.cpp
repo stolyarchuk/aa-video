@@ -62,11 +62,12 @@ void DetectorServer::InitializeNetwork() {
 bool DetectorServer::LoadModel() {
   try {
     auto model_path = options_.Get<std::string>("model");
-    AA_LOG_INFO("Loading model from: " << model_path);
+    auto cfg_path = options_.Get<std::string>("cfg");
+    AA_LOG_INFO("Loading model from: " << model_path
+                                       << " with config: " << cfg_path);
 
     // Load model using OpenCV DNN
-    dnn_network_ =
-        cv::dnn::readNet(model_path, "/workspaces/test/models/yolov7.cfg");
+    dnn_network_ = cv::dnn::readNet(model_path, cfg_path);
 
     if (dnn_network_.empty()) {
       AA_LOG_ERROR("Failed to load model: network is empty");
@@ -110,14 +111,18 @@ bool DetectorServer::LoadModel() {
 }
 
 cv::Mat DetectorServer::PreprocessFrame(const cv::Mat& frame) {
-  // Standard preprocessing with letterboxing for 640x640 input
-  cv::Size network_input_size(640, 640);
+  // Get network input size from Options parameters
+  int width = options_.Get<int>("width");
+  int height = options_.Get<int>("height");
+  cv::Size network_input_size(width, height);
   cv::Scalar mean_values(0, 0, 0);    // No mean subtraction
   double scale_factor = 1.0 / 255.0;  // Normalize to [0,1]
   bool swap_rb = true;                // Convert BGR to RGB
   bool crop = false;
 
-  AA_LOG_DEBUG("Using standard preprocessing: 640x640, RGB, scale=1/255");
+  AA_LOG_DEBUG("Using preprocessing: " << network_input_size.width << "x"
+                                       << network_input_size.height
+                                       << ", RGB, scale=1/255");
 
   try {
     cv::Mat resized_frame;
@@ -410,11 +415,19 @@ std::vector<Detection> DetectorServer::ParseNetworkOutput(
       float x = center_x - width / 2.0f;
       float y = center_y - height / 2.0f;
 
-      // Ensure coordinates are within valid range [0, 640] for 640x640 input
-      x = std::max(0.0f, std::min(x, 640.0f - width));
-      y = std::max(0.0f, std::min(y, 640.0f - height));
-      width = std::max(1.0f, std::min(width, 640.0f - x));
-      height = std::max(1.0f, std::min(height, 640.0f - y));
+      // Get network input size from options for coordinate clamping
+      int network_width = options_.Get<int>("width");
+      int network_height = options_.Get<int>("height");
+
+      // Ensure coordinates are within valid network input range
+      x = std::max(0.0f,
+                   std::min(x, static_cast<float>(network_width) - width));
+      y = std::max(0.0f,
+                   std::min(y, static_cast<float>(network_height) - height));
+      width = std::max(1.0f,
+                       std::min(width, static_cast<float>(network_width) - x));
+      height = std::max(
+          1.0f, std::min(height, static_cast<float>(network_height) - y));
 
       // Create detection with COCO class ID
       Detection detection;
@@ -505,8 +518,10 @@ std::vector<Detection> DetectorServer::ScaleDetectionsToOriginalFrame(
   }
 
   try {
-    // Using 640x640 input, need to scale back to original frame size
-    cv::Size model_size(640, 640);
+    // Get network input size from options
+    int network_width = options_.Get<int>("width");
+    int network_height = options_.Get<int>("height");
+    cv::Size model_size(network_width, network_height);
     cv::Size original_size = original_frame.size();
 
     // Calculate scaling factors (accounting for letterboxing)

@@ -279,8 +279,12 @@ class DetectorServerNeuralNetworkTest : public ::testing::Test {
   void SetUp() override {
     // Create options with YOLOv7 model (works with OpenCV DNN)
     const char* yolo_model_argv[] = {
-        "test_program", "--address=localhost:50061",
-        "--model=/workspaces/test/models/yolov7x.weights"};
+        "test_program",
+        "--address=localhost:50061",
+        "--model=/workspaces/test/models/yolov7.weights",
+        "--cfg=/workspaces/test/models/yolov7.cfg",
+        "--width=640",
+        "--height=640"};
     int yolo_argc = sizeof(yolo_model_argv) / sizeof(yolo_model_argv[0]);
 
     yolo_options_ = std::make_unique<aa::shared::Options>(
@@ -455,8 +459,9 @@ TEST_F(DetectorServerNeuralNetworkTest, RunInferenceCompatibility) {
   // Create a copy of options for this test
   std::string model_path = yolo_options_->Get<std::string>("model");
   std::string model_arg = "--model=" + model_path;
+  std::string cfg_arg = "--cfg=/workspaces/test/models/yolov7.cfg";
   const char* test_argv[] = {"test_program", "--address=localhost:50066",
-                             model_arg.c_str()};
+                             model_arg.c_str(), cfg_arg.c_str()};
   int argc = sizeof(test_argv) / sizeof(test_argv[0]);
 
   aa::shared::Options test_options(argc, test_argv, "DetectorServer");
@@ -516,14 +521,15 @@ TEST_F(DetectorServerNeuralNetworkTest, MultipleServerInstances) {
 
   // Create servers with YOLOv7 model and different ports
   std::vector<std::pair<std::string, int>> model_configs = {
-      {"/workspaces/test/models/yolov7x.weights", 50070},
-      {"/workspaces/test/models/yolov7x.weights", 50071}};
+      {"/workspaces/test/models/yolov7.weights", 50070},
+      {"/workspaces/test/models/yolov7.weights", 50071}};
 
   for (auto& [model_path, port] : model_configs) {
     std::string address = "--address=localhost:" + std::to_string(port);
     std::string model_arg = "--model=" + model_path;
+    std::string cfg_arg = "--cfg=/workspaces/test/models/yolov7.cfg";
     const char* test_argv[] = {"test_program", address.c_str(),
-                               model_arg.c_str()};
+                               model_arg.c_str(), cfg_arg.c_str()};
     int argc = sizeof(test_argv) / sizeof(test_argv[0]);
 
     aa::shared::Options options(argc, test_argv, "DetectorServer");
@@ -572,16 +578,16 @@ TEST_F(DetectorServerNeuralNetworkTest, PreprocessingParametersValidation) {
   };
 
   std::vector<ModelTestCase> test_cases = {
-      {"YOLOv7", "/workspaces/test/models/yolov7x.weights",
-       cv::Size(640, 640)}};
+      {"YOLOv7", "/workspaces/test/models/yolov7.weights", cv::Size(640, 640)}};
 
   for (size_t i = 0; i < test_cases.size(); ++i) {
     SCOPED_TRACE("Testing " + test_cases[i].name);
 
     std::string address_arg = "--address=localhost:5007" + std::to_string(i);
     std::string model_arg = "--model=" + test_cases[i].path;
+    std::string cfg_arg = "--cfg=/workspaces/test/models/yolov7.cfg";
     const char* test_argv[] = {"test_program", address_arg.c_str(),
-                               model_arg.c_str()};
+                               model_arg.c_str(), cfg_arg.c_str()};
     int argc = sizeof(test_argv) / sizeof(test_argv[0]);
 
     aa::shared::Options options(argc, test_argv, "DetectorServer");
