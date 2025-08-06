@@ -170,15 +170,18 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
-RUN groupadd -r appuser && useradd -r -g appuser appuser
+RUN groupadd -r appuser && useradd -r -g appuser appuser && \
+
 
 # Copy built binaries
 COPY --from=builder /app/build/client/detector_client /usr/local/bin/
 COPY --from=builder /app/build/server/detector_server /usr/local/bin/
 
 # Copy models and input directories
-COPY --from=builder /app/models /app/models
-COPY --from=builder /app/input /app/input
+RUN mkdir -p /app/models && \
+    mkdir -p /app/input && \
+    chown -R appuser:appuser /app/models && \
+    chown -R appuser:appuser /app/input
 
 # Set working directory and user
 WORKDIR /app
