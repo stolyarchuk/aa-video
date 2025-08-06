@@ -47,49 +47,63 @@ int main(int argc, char* argv[]) {
 
   // Load image using OpenCV
   std::string input_path = options.Get<std::string>("input");
-  cv::Mat image = cv::imread(input_path);
+  cv::Mat input_image = cv::imread(input_path);
 
-  if (image.empty()) {
+  if (input_image.empty()) {
     AA_LOG_ERROR("Failed to load image from: " << input_path);
     return 1;
   }
 
-  AA_LOG_INFO("Loaded image: " << input_path << " (" << image.rows << "x"
-                               << image.cols << ")");
+  AA_LOG_INFO("Loaded image: " << input_path << " (" << input_image.rows << "x"
+                               << input_image.cols << ")");
 
   // Create Frame from cv::Mat and set in request
-  aa::shared::Frame frame(image);
+  aa::shared::Frame frame(input_image);
   *frame_request.mutable_frame() = frame.ToProto();
 
-  // Create 4 random polygons
+  // Create bounding box-like square polygons
   std::random_device rd;
   std::mt19937 gen(rd());
-  std::uniform_int_distribution<> vertex_count_dist(
-      3, 6);  // 4-6 vertices (more than 3, less than 7)
-  std::uniform_real_distribution<> x_coord_dist(
-      0.0, static_cast<double>(image.cols / 10));  // X within image width/10
-  std::uniform_real_distribution<> y_coord_dist(
-      0.0, static_cast<double>(image.rows / 10));  // Y within image height/10
-  std::uniform_int_distribution<> priority_dist(1, 10);  // Random priority
-  std::uniform_int_distribution<> type_dist(1, 2);  // 1=INCLUSION, 2=EXCLUSION
-  std::vector<int32_t> class_options = {17, 75, 76, 78, 79};
-  std::uniform_int_distribution<> class_idx_dist(
-      0, static_cast<int>(class_options.size() - 1));
-  std::uniform_int_distribution<> num_classes_dist(
-      1, 3);  // 1-3 target classes per polygon
+  std::uniform_int_distribution<> priority_dist(0, 10);  // Random priority 0-10
+  std::uniform_int_distribution<> type_dist(
+      1, 2);  // 1=INCLUSION, 2=EXCLUSION (not 0)
 
-  for (int i = 0; i < 4; ++i) {
+  // Calculate dimension constraints based on input_image size
+  double min_width = input_image.cols * 0.2;   // Minimum 20% of image width
+  double max_width = input_image.cols * 0.8;   // Maximum 80% of image width
+  double min_height = input_image.rows * 0.2;  // Minimum 20% of image height
+  double max_height = input_image.rows * 0.8;  // Maximum 80% of image height
+
+  std::uniform_real_distribution<> width_dist(min_width, max_width);
+  std::uniform_real_distribution<> height_dist(min_height, max_height);
+
+  // Use all COCO classes (0-79)
+  std::vector<int32_t> class_options;
+  for (int32_t i = 0; i < 80; ++i) {
+    class_options.push_back(i);
+  }
+
+  for (int i = 0; i < 6; ++i) {
     std::vector<aa::shared::Point> vertices;
-    int vertex_count = vertex_count_dist(gen) + 1;  // +1 to get 4-7 vertices
 
-    // Generate random vertices within constrained bounds (image dims/10)
-    for (int j = 0; j < vertex_count; ++j) {
-      double x = x_coord_dist(gen);  // X coordinate within [0, image.cols/10]
-      double y = y_coord_dist(gen);  // Y coordinate within [0, image.rows/10]
-      vertices.emplace_back(x, y);
-    }
+    // Generate random dimensions within constraints
+    double width = width_dist(gen);
+    double height = height_dist(gen);
 
-    // Random polygon type
+    // Calculate random position ensuring the polygon fits within image bounds
+    std::uniform_real_distribution<> x_dist(0.0, input_image.cols - width);
+    std::uniform_real_distribution<> y_dist(0.0, input_image.rows - height);
+
+    double x_offset = x_dist(gen);
+    double y_offset = y_dist(gen);
+
+    // Create bounding box-like square (4 vertices)
+    vertices.emplace_back(x_offset, y_offset);                   // Top-left
+    vertices.emplace_back(x_offset + width, y_offset);           // Top-right
+    vertices.emplace_back(x_offset + width, y_offset + height);  // Bottom-right
+    vertices.emplace_back(x_offset, y_offset + height);          // Bottom-left
+
+    // Random polygon type (not 0)
     aa::shared::PolygonType type = (type_dist(gen) == 1)
                                        ? aa::shared::PolygonType::INCLUSION
                                        : aa::shared::PolygonType::EXCLUSION;
@@ -97,19 +111,8 @@ int main(int argc, char* argv[]) {
     // Random priority
     int32_t priority = priority_dist(gen);
 
-    // Random target classes
-    std::vector<int32_t> target_classes;
-    int num_classes = num_classes_dist(gen);
-    std::set<int> selected_indices;
-
-    for (int k = 0; k < num_classes; ++k) {
-      int idx;
-      do {
-        idx = class_idx_dist(gen);
-      } while (selected_indices.count(idx));
-      selected_indices.insert(idx);
-      target_classes.push_back(class_options[idx]);
-    }
+    // Use all target classes
+    std::vector<int32_t> target_classes = class_options;
 
     // Create polygon and add to request
     aa::shared::Polygon polygon(std::move(vertices), type, priority,
@@ -117,11 +120,14 @@ int main(int argc, char* argv[]) {
     *frame_request.add_polygons() = polygon.ToProto();
 
     AA_LOG_INFO("Added polygon "
-                << (i + 1) << ": " << vertex_count << " vertices, "
+                << (i + 1) << ": bounding box (" << static_cast<int>(width)
+                << "x" << static_cast<int>(height) << "), "
                 << (type == aa::shared::PolygonType::INCLUSION ? "INCLUSION"
                                                                : "EXCLUSION")
-                << ", priority=" << priority
-                << ", classes=" << target_classes.size());
+                << ", priority=" << priority << ", position=("
+                << static_cast<int>(x_offset) << ","
+                << static_cast<int>(y_offset) << ")"
+                << ", classes=" << class_options.size());
   }
 
   status = client.ProcessFrame(frame_request, &frame_response);
@@ -130,6 +136,12 @@ int main(int argc, char* argv[]) {
     AA_LOG_ERROR("Process frame failed: " << status.error_message());
     return 1;
   }
+
+  auto result_image =
+      aa::shared::Frame::FromProto(frame_response.result()).ToMat();
+  auto output_path = options.Get<std::string>("output");
+
+  cv::imwrite(output_path, result_image);
 
   return 0;
 }

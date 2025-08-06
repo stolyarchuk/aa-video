@@ -7,8 +7,9 @@
       "request": "launch",
       "program": "${workspaceFolder}/build/server/detector_server",
       "args": [
-        "--model",
-        "asdsadsdsadf"
+        "--model=/workspaces/test/models/yolov7.weights",
+        "--cfg=/workspaces/test/models/yolov7.cfg",
+        "--verbose=true"
       ],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}",

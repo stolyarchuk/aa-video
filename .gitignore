@@ -78,5 +78,7 @@ coverage/
 ipch
 models
 input
-.devcontainer/*.sh
+*.sh
 debug_*
+*.png
+*.jpg

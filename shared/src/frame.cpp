@@ -91,9 +91,23 @@ Frame Frame::FromProto(const ::aa::proto::Frame& proto_frame) {
 }
 
 cv::Mat Frame::ToMat() const {
-  cv::Mat mat{rows_, cols_, elm_type_};
-  std::memcpy(mat.data, data_.data(), data_.size());
-  return mat;
+  // Validate that we have data
+  if (data_.empty() || rows_ <= 0 || cols_ <= 0) {
+    return cv::Mat();  // Return empty Mat for invalid data
+  }
+
+  // Calculate expected data size
+  size_t expected_size = static_cast<size_t>(rows_) * cols_ * elm_size_;
+  if (data_.size() != expected_size) {
+    return cv::Mat();  // Return empty Mat if data size doesn't match
+  }
+
+  // Create Mat directly from existing data (no copy)
+  // The data will be copied by OpenCV's Mat constructor when we return
+  cv::Mat mat(rows_, cols_, elm_type_, const_cast<uint8_t*>(data_.data()));
+
+  // Return a clone to ensure the returned Mat owns its data
+  return mat.clone();
 }
 
 }  // namespace aa::shared

@@ -1,6 +1,7 @@
 #include "detector_server.h"
 
 #include <algorithm>
+#include <iomanip>
 #include <iostream>
 #include <opencv2/dnn.hpp>
 #include <opencv2/imgproc.hpp>
@@ -192,11 +193,17 @@ cv::Mat DetectorServer::RunInference(const cv::Mat& blob) {
     cv::Mat output = dnn_network_.forward();
 
     AA_LOG_DEBUG("Inference completed");
-    // Output format: [batch_size, num_detections, 85]
-    // where 85 = 4 (bbox: x, y, w, h) + 1 (confidence) + 80 (COCO classes)
-    if (!output.empty() && output.dims >= 2) {
-      AA_LOG_DEBUG("Output shape: [" << output.size[0] << ", " << output.size[1]
-                                     << ", " << output.size[2] << "]");
+
+    // Log output tensor information for debugging
+    if (!output.empty()) {
+      std::string shape_str = "[";
+      for (int i = 0; i < output.dims; ++i) {
+        if (i > 0) shape_str += ", ";
+        shape_str += std::to_string(output.size[i]);
+      }
+      shape_str += "]";
+      AA_LOG_DEBUG("Network output shape: " << shape_str << " (dims: "
+                                            << output.dims << ")");
     }
 
     return output;
@@ -213,7 +220,7 @@ cv::Mat DetectorServer::RunInference(const cv::Mat& blob) {
 std::vector<Detection> DetectorServer::PostprocessDetections(
     const cv::Mat& network_output,
     [[maybe_unused]] const cv::Mat& original_frame,
-    const std::vector<aa::shared::Polygon>& polygons) {
+    [[maybe_unused]] const std::vector<aa::shared::Polygon>& polygons) {
   std::vector<Detection> detections;
 
   try {
@@ -226,6 +233,8 @@ std::vector<Detection> DetectorServer::PostprocessDetections(
         ApplyNonMaximumSuppression(raw_detections);
     std::vector<Detection> scaled_detections =
         ScaleDetectionsToOriginalFrame(nms_detections, original_frame);
+
+    // Apply polygon-based filtering to detections
     detections = FilterDetectionsByPolygons(scaled_detections, polygons);
 
   } catch (const cv::Exception& e) {
@@ -334,10 +343,12 @@ grpc::Status DetectorServer::ProcessFrame(
         const_cast<DetectorServer*>(this)->PostprocessDetections(
             network_output, resized_frame, scaled_polygons);
 
-    // Step 4: Populate response with detection results
+    // Step 4: Draw bounding boxes on the result frame
+    cv::Mat result_frame_with_detections = input_frame.clone();
+    DrawBoundingBoxes(result_frame_with_detections, detections);
 
-    // Convert the original input frame back to protobuf format
-    auto result_frame = aa::shared::Frame(input_frame);
+    // Convert the result frame with detections to protobuf format
+    auto result_frame = aa::shared::Frame(result_frame_with_detections);
     auto proto_result_frame = result_frame.ToProto();
 
     // Set the result frame in the response
@@ -364,20 +375,71 @@ std::vector<Detection> DetectorServer::ParseNetworkOutput(
   }
 
   try {
-    // Output format: [batch_size, num_detections, 85]
+    // Output format can vary:
+    // - 2D: [num_detections, 85]
+    // - 3D: [batch_size, num_detections, 85]
+    // - 4D: [batch_size, 1, num_detections, 85]
     // where 85 = 4 (bbox: x, y, w, h) + 1 (confidence) + 80 (COCO classes)
 
+    // Validate output dimensions - need at least 2D tensor
     if (network_output.dims < 2) {
-      AA_LOG_ERROR("Invalid output dimensions: " << network_output.dims);
+      AA_LOG_ERROR("Invalid output dimensions: " << network_output.dims
+                                                 << " (expected at least 2)");
+      return detections;
+    }
+
+    // Validate data pointer
+    if (network_output.data == nullptr) {
+      AA_LOG_ERROR("Network output data is null");
       return detections;
     }
 
     const float confidence_threshold =
-        0.25f;  // Minimum confidence for detections
+        0.1f;  // Lower minimum confidence to catch more detections
     const float* data = reinterpret_cast<const float*>(network_output.data);
 
-    int num_detections = network_output.size[1];
-    int detection_size = network_output.size[2];  // Should be 85
+    // Handle different output tensor shapes
+    int num_detections = 0;
+    int detection_size = 0;
+
+    if (network_output.dims == 2) {
+      // 2D tensor: [num_detections, 85]
+      num_detections = network_output.size[0];
+      detection_size = network_output.size[1];
+      AA_LOG_DEBUG("2D output tensor: [" << num_detections << ", "
+                                         << detection_size << "]");
+    } else if (network_output.dims == 3) {
+      // 3D tensor: [batch_size, num_detections, 85]
+      num_detections = network_output.size[1];
+      detection_size = network_output.size[2];
+      AA_LOG_DEBUG("3D output tensor: [" << network_output.size[0] << ", "
+                                         << num_detections << ", "
+                                         << detection_size << "]");
+    } else if (network_output.dims == 4) {
+      // 4D tensor: [batch_size, 1, num_detections, 85]
+      num_detections = network_output.size[2];
+      detection_size = network_output.size[3];
+      AA_LOG_DEBUG("4D output tensor: ["
+                   << network_output.size[0] << ", " << network_output.size[1]
+                   << ", " << num_detections << ", " << detection_size << "]");
+    } else {
+      AA_LOG_ERROR("Unsupported output tensor dimensions: "
+                   << network_output.dims << " (supported: 2D, 3D, 4D)");
+      return detections;
+    }
+
+    // Validate detection size - need at least 5 values (4 bbox + 1 confidence)
+    if (detection_size < 5) {
+      AA_LOG_ERROR("Invalid detection size: " << detection_size
+                                              << " (expected at least 5)");
+      return detections;
+    }
+
+    // Validate number of detections
+    if (num_detections <= 0) {
+      AA_LOG_WARNING("No detections in network output");
+      return detections;
+    }
 
     AA_LOG_DEBUG("Parsing output: " << num_detections << " detections, "
                                     << detection_size
@@ -390,6 +452,19 @@ std::vector<Detection> DetectorServer::ParseNetworkOutput(
 
     for (int i = 0; i < num_detections; ++i) {
       const float* detection_data = data + i * detection_size;
+
+      // Additional bounds check: ensure we don't exceed the data buffer
+      size_t expected_data_size = 1;
+      for (int d = 0; d < network_output.dims; ++d) {
+        expected_data_size *= static_cast<size_t>(network_output.size[d]);
+      }
+      size_t current_offset = static_cast<size_t>(i * detection_size);
+
+      if (current_offset + detection_size > expected_data_size) {
+        AA_LOG_ERROR("Data access would exceed buffer bounds at detection "
+                     << i);
+        break;
+      }
 
       // Extract bbox coordinates (center_x, center_y, width, height)
       float center_x = detection_data[0];
@@ -422,33 +497,45 @@ std::vector<Detection> DetectorServer::ParseNetworkOutput(
         continue;
       }
 
-      // Convert from center format to top-left format
-      float x = center_x - width / 2.0f;
-      float y = center_y - height / 2.0f;
-
-      // Get network input size from options for coordinate clamping
+      // Convert from center format to top-left format and scale to network size
+      // YOLO outputs normalized coordinates [0,1], scale to network input size
       int network_width = options_.Get<int>("width");
       int network_height = options_.Get<int>("height");
 
+      float scaled_center_x = center_x * network_width;
+      float scaled_center_y = center_y * network_height;
+      float scaled_width = width * network_width;
+      float scaled_height = height * network_height;
+
+      float x = scaled_center_x - scaled_width / 2.0f;
+      float y = scaled_center_y - scaled_height / 2.0f;
+
       // Ensure coordinates are within valid network input range
-      x = std::max(0.0f,
-                   std::min(x, static_cast<float>(network_width) - width));
-      y = std::max(0.0f,
-                   std::min(y, static_cast<float>(network_height) - height));
-      width = std::max(1.0f,
-                       std::min(width, static_cast<float>(network_width) - x));
-      height = std::max(
-          1.0f, std::min(height, static_cast<float>(network_height) - y));
+      x = std::max(
+          0.0f, std::min(x, static_cast<float>(network_width) - scaled_width));
+      y = std::max(0.0f, std::min(y, static_cast<float>(network_height) -
+                                         scaled_height));
+      scaled_width = std::max(
+          1.0f, std::min(scaled_width, static_cast<float>(network_width) - x));
+      scaled_height = std::max(
+          1.0f,
+          std::min(scaled_height, static_cast<float>(network_height) - y));
 
       // Create detection with COCO class ID
       Detection detection;
-      detection.bbox =
-          cv::Rect(static_cast<int>(x), static_cast<int>(y),
-                   static_cast<int>(width), static_cast<int>(height));
+      detection.bbox = cv::Rect(static_cast<int>(x), static_cast<int>(y),
+                                static_cast<int>(scaled_width),
+                                static_cast<int>(scaled_height));
       detection.class_id = best_class_id;  // COCO class ID (0-79)
       detection.confidence = final_confidence;
 
       detections.push_back(detection);
+      AA_LOG_DEBUG("Added detection: class="
+                   << detection.class_id << " confidence=" << std::fixed
+                   << std::setprecision(2) << detection.confidence << " bbox=("
+                   << detection.bbox.x << "," << detection.bbox.y << ","
+                   << detection.bbox.width << "," << detection.bbox.height
+                   << ")");
     }
 
     AA_LOG_INFO("Parsed " << detections.size()
@@ -468,11 +555,11 @@ std::vector<Detection> DetectorServer::ApplyNonMaximumSuppression(
   }
 
   try {
-    // NMS parameters
-    const float score_threshold = 0.25f;  // Minimum confidence threshold
-    const float nms_threshold = 0.45f;    // IoU threshold for NMS
+    // NMS parameters - Lower thresholds to keep more detections
+    const float score_threshold = 0.1f;  // Lower confidence threshold
+    const float nms_threshold = 0.45f;   // IoU threshold for NMS
 
-    // Prepare data for OpenCV NMS
+    // Use batched NMS with class offsets to prevent cross-class suppression
     std::vector<cv::Rect> boxes;
     std::vector<float> confidences;
     std::vector<int> class_ids;
@@ -481,35 +568,56 @@ std::vector<Detection> DetectorServer::ApplyNonMaximumSuppression(
     confidences.reserve(detections.size());
     class_ids.reserve(detections.size());
 
+    // Find maximum coordinate for class offset calculation
+    float max_coord = 0.0f;
     for (const auto& detection : detections) {
       if (detection.confidence >= score_threshold) {
-        boxes.push_back(detection.bbox);
+        max_coord = std::max(max_coord,
+                             static_cast<float>(std::max(
+                                 {detection.bbox.x + detection.bbox.width,
+                                  detection.bbox.y + detection.bbox.height})));
+      }
+    }
+
+    // Prepare data with class-based spatial offsets
+    for (const auto& detection : detections) {
+      if (detection.confidence >= score_threshold) {
+        // Add class-based offset to prevent cross-class NMS
+        float class_offset = detection.class_id * (max_coord + 1.0f);
+        cv::Rect offset_bbox = detection.bbox;
+        offset_bbox.x += static_cast<int>(class_offset);
+        offset_bbox.y += static_cast<int>(class_offset);
+
+        boxes.push_back(offset_bbox);
         confidences.push_back(detection.confidence);
         class_ids.push_back(detection.class_id);
       }
     }
 
-    AA_LOG_DEBUG("Applying NMS to " << boxes.size() << " detections");
+    AA_LOG_DEBUG("Applying batched NMS to "
+                 << boxes.size() << " detections with class offsets");
 
-    // Apply Non-Maximum Suppression
+    // Apply Non-Maximum Suppression with class offsets
     std::vector<int> nms_indices;
     cv::dnn::NMSBoxes(boxes, confidences, score_threshold, nms_threshold,
                       nms_indices);
 
-    // Build final detection list
+    // Build final detection list with original coordinates
     std::vector<Detection> nms_detections;
     nms_detections.reserve(nms_indices.size());
 
     for (int idx : nms_indices) {
       Detection nms_detection;
-      nms_detection.bbox = boxes[idx];
-      nms_detection.confidence = confidences[idx];
-      nms_detection.class_id = class_ids[idx];
+      // Use original detection data (without offsets)
+      const auto& original_detection = detections[idx];
+      nms_detection.bbox = original_detection.bbox;
+      nms_detection.confidence = original_detection.confidence;
+      nms_detection.class_id = original_detection.class_id;
       nms_detections.push_back(nms_detection);
     }
 
-    AA_LOG_INFO("NMS reduced detections from " << detections.size() << " to "
-                                               << nms_detections.size());
+    AA_LOG_INFO("Batched NMS reduced detections from "
+                << detections.size() << " to " << nms_detections.size());
 
     return nms_detections;
 
@@ -671,6 +779,87 @@ bool DetectorServer::IsDetectionClassAllowed(
   auto it = std::find(target_classes.begin(), target_classes.end(),
                       detection.class_id);
   return it != target_classes.end();
+}
+
+void DetectorServer::DrawBoundingBoxes(
+    cv::Mat& frame, const std::vector<Detection>& detections) const {
+  // COCO class names for better visualization
+  static const std::vector<std::string> coco_classes = {
+      "person",        "bicycle",      "car",
+      "motorcycle",    "airplane",     "bus",
+      "train",         "truck",        "boat",
+      "traffic light", "fire hydrant", "stop sign",
+      "parking meter", "bench",        "bird",
+      "cat",           "dog",          "horse",
+      "sheep",         "cow",          "elephant",
+      "bear",          "zebra",        "giraffe",
+      "backpack",      "umbrella",     "handbag",
+      "tie",           "suitcase",     "frisbee",
+      "skis",          "snowboard",    "sports ball",
+      "kite",          "baseball bat", "baseball glove",
+      "skateboard",    "surfboard",    "tennis racket",
+      "bottle",        "wine glass",   "cup",
+      "fork",          "knife",        "spoon",
+      "bowl",          "banana",       "apple",
+      "sandwich",      "orange",       "broccoli",
+      "carrot",        "hot dog",      "pizza",
+      "donut",         "cake",         "chair",
+      "couch",         "potted plant", "bed",
+      "dining table",  "toilet",       "tv",
+      "laptop",        "mouse",        "remote",
+      "keyboard",      "cell phone",   "microwave",
+      "oven",          "toaster",      "sink",
+      "refrigerator",  "book",         "clock",
+      "vase",          "scissors",     "teddy bear",
+      "hair drier",    "toothbrush"};
+
+  // Define colors for different classes (cycling through a set of distinct
+  // colors)
+  static const std::vector<cv::Scalar> colors = {
+      cv::Scalar(255, 0, 0),      // Red
+      cv::Scalar(0, 255, 0),      // Green
+      cv::Scalar(0, 0, 255),      // Blue
+      cv::Scalar(255, 255, 0),    // Cyan
+      cv::Scalar(255, 0, 255),    // Magenta
+      cv::Scalar(0, 255, 255),    // Yellow
+      cv::Scalar(128, 0, 128),    // Purple
+      cv::Scalar(255, 165, 0),    // Orange
+      cv::Scalar(255, 192, 203),  // Pink
+      cv::Scalar(0, 128, 0)       // Dark Green
+  };
+
+  for (const auto& detection : detections) {
+    // Choose color based on class ID
+    cv::Scalar color = colors[detection.class_id % colors.size()];
+
+    // Draw bounding box rectangle
+    cv::rectangle(frame, detection.bbox, color, 1);
+
+    // Prepare label text
+    std::string class_name =
+        (detection.class_id < static_cast<int>(coco_classes.size()))
+            ? coco_classes[detection.class_id]
+            : "class_" + std::to_string(detection.class_id);
+
+    std::string label =
+        class_name + " " +
+        std::to_string(static_cast<int>(detection.confidence * 100)) + "%";
+
+    // Calculate text size for background rectangle
+    int baseline = 0;
+    cv::Size text_size =
+        cv::getTextSize(label, cv::FONT_HERSHEY_SIMPLEX, 0.5, 1, &baseline);
+
+    // Draw background rectangle for text
+    cv::Point text_origin(detection.bbox.x, detection.bbox.y - 5);
+    cv::Rect text_rect(text_origin.x, text_origin.y - text_size.height,
+                       text_size.width, text_size.height + baseline);
+    cv::rectangle(frame, text_rect, color, cv::FILLED);
+
+    // Draw text label
+    cv::putText(frame, label, text_origin, cv::FONT_HERSHEY_SIMPLEX, 0.5,
+                cv::Scalar(255, 255, 255), 1);
+  }
 }
 
 }  // namespace aa::server

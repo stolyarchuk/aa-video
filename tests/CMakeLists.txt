@@ -35,6 +35,10 @@ add_executable(test_frame
     test_frame.cpp
 )
 
+add_executable(test_polygon_filtering
+    test_polygon_filtering.cpp
+)
+
 # Link against required libraries for signal set tests
 target_link_libraries(test_signal_set
     aa_shared
@@ -83,12 +87,25 @@ target_link_libraries(test_frame
     pthread
 )
 
+# Link against required libraries for polygon filtering tests
+target_link_libraries(test_polygon_filtering
+    aa_server
+    aa_shared
+    ${OpenCV_LIBS}
+    gRPC::grpc++
+    protobuf::libprotobuf
+    GTest::GTest
+    GTest::Main
+    pthread
+)
+
 # Add the tests to CTest
 add_test(NAME SignalSetTests COMMAND test_signal_set)
 add_test(NAME DetectorServerTests COMMAND test_detector_server)
 add_test(NAME OptionsTests COMMAND test_options)
 add_test(NAME PolygonTests COMMAND test_polygon)
 add_test(NAME FrameTests COMMAND test_frame)
+add_test(NAME PolygonFilteringTests COMMAND test_polygon_filtering)
 
 # Set test properties
 set_tests_properties(SignalSetTests PROPERTIES
@@ -106,3 +123,4 @@ add_dependencies(test_signal_set aa_shared)
 add_dependencies(test_detector_server aa_server aa_shared)
 add_dependencies(test_polygon aa_shared)
 add_dependencies(test_frame aa_shared)
+add_dependencies(test_polygon_filtering aa_server aa_shared)
