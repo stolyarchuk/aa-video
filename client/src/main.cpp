@@ -67,18 +67,14 @@ int main(int argc, char* argv[]) {
   std::uniform_int_distribution<> vertex_count_dist(
       3, 6);  // 4-6 vertices (more than 3, less than 7)
   std::uniform_real_distribution<> x_coord_dist(
-      0.0, static_cast<double>(image.cols / 10));  // X within image width/10
+      0.0, static_cast<double>(image.cols * 0.4));  // X within image width/10
   std::uniform_real_distribution<> y_coord_dist(
-      0.0, static_cast<double>(image.rows / 10));  // Y within image height/10
+      0.0, static_cast<double>(image.rows * 0.4));  // Y within image height/10
   std::uniform_int_distribution<> priority_dist(1, 10);  // Random priority
   std::uniform_int_distribution<> type_dist(1, 2);  // 1=INCLUSION, 2=EXCLUSION
-  std::vector<int32_t> class_options = {17, 75, 76, 78, 79};
-  std::uniform_int_distribution<> class_idx_dist(
-      0, static_cast<int>(class_options.size() - 1));
-  std::uniform_int_distribution<> num_classes_dist(
-      1, 3);  // 1-3 target classes per polygon
+  std::vector<int32_t> class_options = {15, 75, 57, 65, 17};
 
-  for (int i = 0; i < 4; ++i) {
+  for (int i = 0; i < 1; ++i) {
     std::vector<aa::shared::Point> vertices;
     int vertex_count = vertex_count_dist(gen) + 1;  // +1 to get 4-7 vertices
 
@@ -97,19 +93,8 @@ int main(int argc, char* argv[]) {
     // Random priority
     int32_t priority = priority_dist(gen);
 
-    // Random target classes
-    std::vector<int32_t> target_classes;
-    int num_classes = num_classes_dist(gen);
-    std::set<int> selected_indices;
-
-    for (int k = 0; k < num_classes; ++k) {
-      int idx;
-      do {
-        idx = class_idx_dist(gen);
-      } while (selected_indices.count(idx));
-      selected_indices.insert(idx);
-      target_classes.push_back(class_options[idx]);
-    }
+    // Use all target classes
+    std::vector<int32_t> target_classes = class_options;
 
     // Create polygon and add to request
     aa::shared::Polygon polygon(std::move(vertices), type, priority,
@@ -121,7 +106,7 @@ int main(int argc, char* argv[]) {
                 << (type == aa::shared::PolygonType::INCLUSION ? "INCLUSION"
                                                                : "EXCLUSION")
                 << ", priority=" << priority
-                << ", classes=" << target_classes.size());
+                << ", classes=" << class_options.size());
   }
 
   status = client.ProcessFrame(frame_request, &frame_response);
@@ -130,6 +115,12 @@ int main(int argc, char* argv[]) {
     AA_LOG_ERROR("Process frame failed: " << status.error_message());
     return 1;
   }
+
+  auto result_image =
+      aa::shared::Frame::FromProto(frame_response.result()).ToMat();
+  auto output_path = options.Get<std::string>("output");
+
+  cv::imwrite(output_path, result_image);
 
   return 0;
 }

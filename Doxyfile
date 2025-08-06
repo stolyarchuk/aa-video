@@ -5,8 +5,8 @@
 #---------------------------------------------------------------------------
 DOXYFILE_ENCODING      = UTF-8
 PROJECT_NAME           = "AA Video Processing System"
-PROJECT_NUMBER         = 1.0.0
-PROJECT_BRIEF          = "A modern C++ video processing system with gRPC-based client-server architecture for real-time object detection and classification using deep neural networks"
+PROJECT_NUMBER         = 1.2.0
+PROJECT_BRIEF          = "A modern C++23 video processing system with gRPC-based client-server architecture for real-time object detection using YOLO neural networks with advanced polygon-based detection zones, comprehensive memory safety, and segmentation fault protection"
 PROJECT_LOGO           =
 OUTPUT_DIRECTORY       = docs
 CREATE_SUBDIRS         = YES
@@ -47,6 +47,17 @@ ALIASES                = "threadsafe=\xrefitem threadsafe \"Thread Safety\" \"Th
                          "async=\xrefitem async \"Asynchronous\" \"Asynchronous Components\"" \
                          "internal=\xrefitem internal \"Internal\" \"Internal Implementation Details\"" \
                          "performance=\xrefitem performance \"Performance\" \"Performance Considerations\"" \
+                         "memorysafe=\xrefitem memorysafe \"Memory Safety\" \"Memory Safety Features\"" \
+                         "segfaultsafe=\xrefitem segfaultsafe \"Segfault Protection\" \"Segmentation Fault Protection\"" \
+                         "boundscheck=\xrefitem boundscheck \"Bounds Checking\" \"Buffer Bounds Validation\"" \
+                         "nullsafe=\xrefitem nullsafe \"Null Safety\" \"Null Pointer Protection\"" \
+                         "yolo=\xrefitem yolo \"YOLO Models\" \"YOLO Neural Network Models\"" \
+                         "coco=\xrefitem coco \"COCO Dataset\" \"COCO Dataset Classes (0-79)\"" \
+                         "polygon=\xrefitem polygon \"Polygon Zones\" \"Polygon Detection Zones\"" \
+                         "nms=\xrefitem nms \"Non-Maximum Suppression\" \"Non-Maximum Suppression Algorithm\"" \
+                         "letterbox=\xrefitem letterbox \"Letterboxing\" \"Letterboxing Preprocessing\"" \
+                         "validation=\xrefitem validation \"Input Validation\" \"Input Parameter Validation\"" \
+                         "errorhandling=\xrefitem errorhandling \"Error Handling\" \"Error Handling and Recovery\"" \
                          "deprecated=\deprecated" \
                          "since=\since" \
                          "todo=\todo" \
@@ -184,7 +195,12 @@ EXAMPLE_PATH           = @CMAKE_CURRENT_SOURCE_DIR@/tests \
                          @CMAKE_CURRENT_SOURCE_DIR@/server/src
 EXAMPLE_PATTERNS       = test_*.cpp \
                          main.cpp \
-                         *.h
+                         *.h \
+                         *.proto \
+                         detector_server.cpp \
+                         detector_client.h \
+                         frame.cpp \
+                         polygon.cpp
 EXAMPLE_RECURSIVE      = NO
 IMAGE_PATH             =
 INPUT_FILTER           =
@@ -226,18 +242,18 @@ HTML_FOOTER            =
 HTML_STYLESHEET        =
 HTML_EXTRA_STYLESHEET  =
 HTML_EXTRA_FILES       =
-HTML_COLORSTYLE_HUE    = 220
-HTML_COLORSTYLE_SAT    = 100
-HTML_COLORSTYLE_GAMMA  = 80
+HTML_COLORSTYLE_HUE    = 200
+HTML_COLORSTYLE_SAT    = 80
+HTML_COLORSTYLE_GAMMA  = 90
 HTML_TIMESTAMP         = NO
 HTML_DYNAMIC_MENUS     = YES
 HTML_DYNAMIC_SECTIONS  = YES
 HTML_INDEX_NUM_ENTRIES = 100
 GENERATE_DOCSET        = NO
-DOCSET_FEEDNAME        = "Doxygen generated docs"
-DOCSET_BUNDLE_ID       = org.doxygen.Project
-DOCSET_PUBLISHER_ID    = org.doxygen.Publisher
-DOCSET_PUBLISHER_NAME  = Publisher
+DOCSET_FEEDNAME        = "AA Video Processing System Documentation"
+DOCSET_BUNDLE_ID       = com.aa.video_processing
+DOCSET_PUBLISHER_ID    = com.aa.video_processing.publisher
+DOCSET_PUBLISHER_NAME  = "AA Video Processing Team"
 GENERATE_HTMLHELP      = NO
 CHM_FILE               =
 HHC_LOCATION           =
@@ -247,14 +263,14 @@ BINARY_TOC             = NO
 TOC_EXPAND             = NO
 GENERATE_QHP           = NO
 QCH_FILE               =
-QHP_NAMESPACE          = org.doxygen.Project
-QHP_VIRTUAL_FOLDER     = doc
+QHP_NAMESPACE          = com.aa.video_processing
+QHP_VIRTUAL_FOLDER     = aa_video_docs
 QHP_CUST_FILTER_NAME   =
 QHP_CUST_FILTER_ATTRS  =
 QHP_SECT_FILTER_ATTRS  =
 QHG_LOCATION           =
 GENERATE_ECLIPSEHELP   = NO
-ECLIPSE_DOC_ID         = org.doxygen.Project
+ECLIPSE_DOC_ID         = com.aa.video_processing
 DISABLE_INDEX          = NO
 GENERATE_TREEVIEW      = YES
 ENUM_VALUES_PER_LINE   = 4
@@ -357,13 +373,20 @@ INCLUDE_PATH           = @CMAKE_CURRENT_SOURCE_DIR@/client/include \
                          @CMAKE_CURRENT_BINARY_DIR@/shared
 INCLUDE_FILE_PATTERNS  = *.h *.hpp *.hxx
 PREDEFINED             = __cplusplus \
+                         "__cplusplus=202302L" \
                          "AA_LOG_FATAL(x)=" \
                          "AA_LOG_ERROR(x)=" \
                          "AA_LOG_WARNING(x)=" \
                          "AA_LOG_INFO(x)=" \
                          "AA_LOG_DEBUG(x)=" \
                          "AA_LOG_VERBOSE(x)=" \
-                         "DOXYGEN_DOCUMENTATION"
+                         "DOXYGEN_DOCUMENTATION" \
+                         "GRPC_CPP_API=" \
+                         "OPENCV_API=" \
+                         "constexpr=const" \
+                         "noexcept=" \
+                         "[[maybe_unused]]=" \
+                         "[[nodiscard]]="
 EXPAND_AS_DEFINED      =
 SKIP_FUNCTION_MACROS   = YES
 

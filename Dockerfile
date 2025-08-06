@@ -1,4 +1,4 @@
-FROM debian:12-slim
+FROM ubuntu:24.04
 
 # Install basic packages and development tools
 RUN apt-get update && apt-get install -y \
@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y \
     gnupg \
     lsb-release \
     sudo \
+    software-properties-common \
     && rm -rf /var/lib/apt/lists/*
 
 # Install C++ development tools
@@ -71,15 +72,12 @@ RUN apt-get update && apt-get install -y \
     libpng-dev \
     libtiff-dev \
     gfortran \
-    openexr \
+    libopenexr-dev \
     libatlas-base-dev \
     python3-dev \
     python3-numpy \
     libtbbmalloc2 \
     libtbb-dev \
-    libjpeg-dev \
-    libpng-dev \
-    libtiff-dev \
     libdc1394-dev \
     && rm -rf /var/lib/apt/lists/*
 
@@ -92,8 +90,8 @@ RUN apt-get update && apt-get install -y \
 # Build and install a more recent version of OpenCV with DNN support from source
 # This ensures we have the latest DNN capabilities
 WORKDIR /tmp
-RUN git clone --depth 1 --branch 4.8.1 https://github.com/opencv/opencv.git && \
-    git clone --depth 1 --branch 4.8.1 https://github.com/opencv/opencv_contrib.git && \
+RUN git clone --depth 1 --branch 4.12.0 https://github.com/opencv/opencv.git && \
+    git clone --depth 1 --branch 4.12.0 https://github.com/opencv/opencv_contrib.git && \
     cd opencv && \
     mkdir build && cd build && \
     cmake -D CMAKE_BUILD_TYPE=RELEASE \

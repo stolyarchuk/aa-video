@@ -201,6 +201,15 @@ class DetectorServer {
                                const aa::shared::Polygon& polygon);
 
   /**
+   * @brief Draw bounding boxes on the frame for visualization
+   *
+   * @param frame Frame to draw bounding boxes on (modified in-place)
+   * @param detections Vector of detections to visualize
+   */
+  void DrawBoundingBoxes(cv::Mat& frame,
+                         const std::vector<Detection>& detections) const;
+
+  /**
    * @brief Check the health of the server
    *
    * @param request Health check request
