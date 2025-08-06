@@ -80,3 +80,5 @@ models
 input
 *.sh
 debug_*
+*.png
+*.jpg

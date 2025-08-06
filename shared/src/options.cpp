@@ -9,7 +9,7 @@ namespace {
 const cv::String keys =
     "{help h usage ? |      | Print this help message}"
     "{input i        |<NONE>| Input file path (optional)}"
-    "{output o       |      | Output file path (optional)}"
+    "{output o       |output.png| Output file path (optional)}"
     "{width w        | 640  | Frame width for processing}"
     "{height ht      | 640  | Frame height for processing}"
     "{confidence c   | 0.5  | Confidence threshold for detection (0.0-1.0)}"

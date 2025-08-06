@@ -2,11 +2,22 @@
   "name": "C++ CMake Development",
   "build": {
     "dockerfile": "../Dockerfile",
-    "context": ".."
+    "context": "..",
+    "target": "development"
   },
   "features": {
     "ghcr.io/devcontainers/features/git:1": {},
     "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "runArgs": [
+    "--device=/dev/dri",
+    "--userns=keep-id",
+    "--annotation=run.oci.keep_original_groups=1"
+  ],
+  "remoteEnv": {
+    "XAUTHORITY": "/tmp/.docker.xauth",
+    "DISPLAY": "${localEnv:DISPLAY}",
+    "DBUS_SESSION_BUS_ADDRESS": "unix:path=/tmp/user/1000/bus"
   },
   "customizations": {
     "vscode": {
@@ -20,20 +31,20 @@
         "humao.rest-client",
         "swindh.enumerator",
         "timonwong.shellcheck"
-      ],
-      "settings": {
-        "cmake.configureOnOpen": true,
-        "cmake.buildBeforeRun": true,
-        "C_Cpp.default.cppStandard": "c++23",
-        "C_Cpp.default.intelliSenseMode": "gcc-x64",
-        "editor.formatOnSave": true,
-        "C_Cpp.clang_format_style": "file"
-      }
+      ]
     }
   },
   "forwardPorts": [
     8080,
     9090
   ],
-  "remoteUser": "vscode"
+  "remoteUser": "ubuntu",
+  "initializeCommand": "${localWorkspaceFolder}/.devcontainer/initialize.sh",
+  "postCreateCommand": "${containerWorkspaceFolder}/.devcontainer/post_create.sh",
+  "postAttachCommand": "${containerWorkspaceFolder}/.devcontainer/post_attach.sh",
+  "mounts": [
+    "source=/run/udev/data,target=/run/udev/data,type=bind,consistency=cached",
+    "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind,consistency=cached",
+    "source=/tmp/.docker.xauth,target=/tmp/.docker.xauth,type=bind,consistency=cached"
+  ]
 }

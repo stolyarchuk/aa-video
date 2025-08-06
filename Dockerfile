@@ -1,4 +1,4 @@
-FROM ubuntu:24.04
+FROM ubuntu:24.04 AS builder
 
 # Install basic packages and development tools
 RUN apt-get update && apt-get install -y \
@@ -27,6 +27,14 @@ RUN apt-get update && apt-get install -y \
     ccache \
     && rm -rf /var/lib/apt/lists/*
 
+# Configure ccache
+ENV CCACHE_DIR=/root/.ccache
+ENV CC="ccache gcc"
+ENV CXX="ccache g++"
+RUN ccache --set-config=max_size=2G
+RUN ccache --set-config=cache_dir=/root/.ccache
+RUN ccache --set-config=compression=true
+
 # Install dependencies for gRPC and OpenCV
 RUN apt-get update && apt-get install -y \
     autoconf \
@@ -44,8 +52,6 @@ RUN apt-get update && apt-get install -y \
 
 # Install OpenCV dependencies
 RUN apt-get update && apt-get install -y \
-    libopencv-dev \
-    libopencv-contrib-dev \
     python3-opencv \
     libeigen3-dev \
     libgflags-dev \
@@ -90,11 +96,14 @@ RUN apt-get update && apt-get install -y \
 # Build and install a more recent version of OpenCV with DNN support from source
 # This ensures we have the latest DNN capabilities
 WORKDIR /tmp
-RUN git clone --depth 1 --branch 4.12.0 https://github.com/opencv/opencv.git && \
+RUN --mount=type=cache,target=/root/.ccache \
+    --mount=type=cache,target=/var/cache/apt \
+    --mount=type=cache,target=/var/lib/apt/lists \
+    git clone --depth 1 --branch 4.12.0 https://github.com/opencv/opencv.git && \
     git clone --depth 1 --branch 4.12.0 https://github.com/opencv/opencv_contrib.git && \
     cd opencv && \
     mkdir build && cd build && \
-    cmake -D CMAKE_BUILD_TYPE=RELEASE \
+    CC="ccache gcc" CXX="ccache g++" cmake -D CMAKE_BUILD_TYPE=RELEASE \
     -D CMAKE_INSTALL_PREFIX=/usr/local \
     -D INSTALL_PYTHON_EXAMPLES=OFF \
     -D INSTALL_C_EXAMPLES=OFF \
@@ -105,11 +114,13 @@ RUN git clone --depth 1 --branch 4.12.0 https://github.com/opencv/opencv.git && 
     -D WITH_TBB=ON \
     -D WITH_V4L=ON \
     -D WITH_QT=OFF \
-    -D WITH_GTK=OFF \
+    -D WITH_GTK=ON \
     -D WITH_OPENGL=ON \
     -D OPENCV_DNN_CUDA=OFF \
     -D BUILD_opencv_dnn=ON \
     -D BUILD_opencv_python3=ON \
+    -D CMAKE_C_COMPILER_LAUNCHER=ccache \
+    -D CMAKE_CXX_COMPILER_LAUNCHER=ccache \
     .. && \
     make -j$(nproc) && \
     make install && \
@@ -122,22 +133,56 @@ RUN apt-get update && apt-get install -y \
     graphviz \
     && rm -rf /var/lib/apt/lists/*
 
-# Create vscode user
-RUN groupadd --gid 1000 vscode \
-    && useradd --uid 1000 --gid vscode --shell /bin/bash --create-home vscode \
-    && echo 'vscode ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+# Copy source code
+WORKDIR /app
+COPY . .
 
-# Set working directory
-WORKDIR /workspace
+# Build the application
+RUN --mount=type=cache,target=/root/.ccache \
+    mkdir -p build && \
+    cd build && \
+    CC="ccache gcc" CXX="ccache g++" cmake \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+    -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+    .. && \
+    make -j$(nproc)
 
-# Change ownership to vscode user
-RUN chown -R vscode:vscode /workspace
+# Development stage (for devcontainer)
+FROM builder AS development
 
-USER vscode
+RUN echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
-# Verify installations
-RUN pkg-config --modversion opencv4 && \
-    pkg-config --exists grpc++ && \
-    echo "gRPC and OpenCV with DNN support installed successfully"
+USER ubuntu
 
 CMD ["/bin/bash"]
+
+# Production stage
+FROM ubuntu:24.04 AS production
+
+# Install runtime dependencies only
+RUN apt-get update && apt-get install -y \
+    libopencv-dev \
+    libgrpc++-dev \
+    libprotobuf-dev \
+    libtbb-dev \
+    libgtk-3-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+
+# Copy built binaries
+COPY --from=builder /app/build/client/detector_client /usr/local/bin/
+COPY --from=builder /app/build/server/detector_server /usr/local/bin/
+
+# Copy models and input directories
+COPY --from=builder /app/models /app/models
+COPY --from=builder /app/input /app/input
+
+# Set working directory and user
+WORKDIR /app
+USER appuser
+
+# Default command
+CMD ["detector_server"]
