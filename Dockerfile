@@ -52,7 +52,6 @@ RUN apt-get update && apt-get install -y \
 
 # Install OpenCV dependencies
 RUN apt-get update && apt-get install -y \
-    python3-opencv \
     libeigen3-dev \
     libgflags-dev \
     libgoogle-glog-dev \
@@ -162,12 +161,48 @@ FROM ubuntu:24.04 AS production
 
 # Install runtime dependencies only
 RUN apt-get update && apt-get install -y \
-    libopencv-dev \
     libgrpc++-dev \
     libprotobuf-dev \
-    libtbb-dev \
+    libtbb12 \
     libgtk-3-0 \
+    libgl1 \
+    libglu1-mesa \
+    libwebpdemux2 \
+    libgoogle-glog-dev \
+    libgflags-dev \
+    libeigen3-dev \
+    libatlas-base-dev \
+    liblapack3 \
+    libblas3 \
+    libhdf5-103-1t64 \
+    libhdf5-hl-100t64 \
+    libavcodec-dev \
+    libavformat-dev \
+    libswscale-dev \
+    libv4l-0 \
+    libxvidcore4 \
+    libx264-164 \
+    libjpeg-turbo8 \
+    libpng16-16 \
+    libtiff6 \
+    libopenexr-3-1-30 \
+    libdc1394-25 \
+    python3 \
+    python3-numpy \
     && rm -rf /var/lib/apt/lists/*
+
+# Copy OpenCV libraries from builder stage
+COPY --from=builder /usr/local/lib/libopencv_* /usr/local/lib/
+# Copy other OpenCV files from builder stage using a script to handle missing directories
+COPY --from=builder /usr/local /tmp/builder_usr_local/
+RUN mkdir -p /usr/local/lib/pkgconfig /usr/local/include /usr/local/bin /usr/local/share && \
+    if [ -d /tmp/builder_usr_local/include ]; then cp -r /tmp/builder_usr_local/include/* /usr/local/include/ 2>/dev/null || true; fi && \
+    if [ -d /tmp/builder_usr_local/lib/pkgconfig ]; then cp -r /tmp/builder_usr_local/lib/pkgconfig/* /usr/local/lib/pkgconfig/ 2>/dev/null || true; fi && \
+    if [ -d /tmp/builder_usr_local/share ]; then cp -r /tmp/builder_usr_local/share/* /usr/local/share/ 2>/dev/null || true; fi && \
+    rm -rf /tmp/builder_usr_local
+
+# Update library cache
+RUN ldconfig
 
 # Create non-root user
 RUN groupadd -r appuser && useradd -r -g appuser appuser
@@ -175,12 +210,6 @@ RUN groupadd -r appuser && useradd -r -g appuser appuser
 # Copy built binaries
 COPY --from=builder /app/build/client/detector_client /usr/local/bin/
 COPY --from=builder /app/build/server/detector_server /usr/local/bin/
-
-# Copy models and input directories
-RUN mkdir -p /app/models && \
-    mkdir -p /app/input && \
-    chown -R appuser:appuser /app/models && \
-    chown -R appuser:appuser /app/input
 
 # Set working directory and user
 WORKDIR /app
