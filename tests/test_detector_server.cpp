@@ -270,30 +270,21 @@ TEST_F(DetectorServerTest, MultipleServerInstances) {
 /**
  * @brief Test fixture for neural network methods with real model
  *
- * This fixture creates test scenarios with the actual ViT model to test
+ * This fixture creates test scenarios with the actual YOLOv7 model to test
  * the core neural network pipeline methods: LoadModel, PreprocessFrame,
  * and RunInference through the public interface.
  */
 class DetectorServerNeuralNetworkTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    // Create options with ResNet model (works with OpenCV DNN)
-    const char* resnet_model_argv[] = {
+    // Create options with YOLOv7 model (works with OpenCV DNN)
+    const char* yolo_model_argv[] = {
         "test_program", "--address=localhost:50061",
-        "--model=/workspaces/test/models/resnet50.onnx"};
-    int resnet_argc = sizeof(resnet_model_argv) / sizeof(resnet_model_argv[0]);
+        "--model=/workspaces/test/models/yolov7x.weights"};
+    int yolo_argc = sizeof(yolo_model_argv) / sizeof(yolo_model_argv[0]);
 
-    resnet_options_ = std::make_unique<aa::shared::Options>(
-        resnet_argc, resnet_model_argv, "DetectorServer");
-
-    // Create options with ViT model (has OpenCV compatibility issues)
-    const char* vit_model_argv[] = {
-        "test_program", "--address=localhost:50060",
-        "--model=/workspaces/test/models/vit-base-patch16-224.onnx"};
-    int vit_argc = sizeof(vit_model_argv) / sizeof(vit_model_argv[0]);
-
-    vit_options_ = std::make_unique<aa::shared::Options>(
-        vit_argc, vit_model_argv, "DetectorServer");
+    yolo_options_ = std::make_unique<aa::shared::Options>(
+        yolo_argc, yolo_model_argv, "DetectorServer");
 
     // Create options with invalid model path
     const char* invalid_model_argv[] = {
@@ -310,18 +301,17 @@ class DetectorServerNeuralNetworkTest : public ::testing::Test {
   }
 
   void TearDown() override {
-    resnet_options_.reset();
-    vit_options_.reset();
+    yolo_options_.reset();
     invalid_options_.reset();
   }
 
   void CreateTestImages() {
-    // Create a standard test image (224x224 RGB)
-    test_image_224_ = cv::Mat::zeros(224, 224, CV_8UC3);
-    cv::randu(test_image_224_, cv::Scalar(0, 0, 0), cv::Scalar(255, 255, 255));
+    // Create a standard test image (640x640 RGB)
+    test_image_640_ = cv::Mat::zeros(640, 640, CV_8UC3);
+    cv::randu(test_image_640_, cv::Scalar(0, 0, 0), cv::Scalar(255, 255, 255));
 
     // Create a larger test image that needs resizing
-    test_image_large_ = cv::Mat::zeros(640, 480, CV_8UC3);
+    test_image_large_ = cv::Mat::zeros(800, 600, CV_8UC3);
     cv::randu(test_image_large_, cv::Scalar(0, 0, 0),
               cv::Scalar(255, 255, 255));
 
@@ -331,18 +321,17 @@ class DetectorServerNeuralNetworkTest : public ::testing::Test {
               cv::Scalar(255, 255, 255));
 
     // Create a grayscale image
-    test_image_grayscale_ = cv::Mat::zeros(224, 224, CV_8UC1);
+    test_image_grayscale_ = cv::Mat::zeros(640, 640, CV_8UC1);
     cv::randu(test_image_grayscale_, cv::Scalar(0), cv::Scalar(255));
 
     // Create an empty image for edge case testing
     test_image_empty_ = cv::Mat();
   }
 
-  std::unique_ptr<aa::shared::Options> resnet_options_;
-  std::unique_ptr<aa::shared::Options> vit_options_;
+  std::unique_ptr<aa::shared::Options> yolo_options_;
   std::unique_ptr<aa::shared::Options> invalid_options_;
 
-  cv::Mat test_image_224_;
+  cv::Mat test_image_640_;
   cv::Mat test_image_large_;
   cv::Mat test_image_small_;
   cv::Mat test_image_grayscale_;
@@ -351,29 +340,18 @@ class DetectorServerNeuralNetworkTest : public ::testing::Test {
 
 // ===== LOADMODEL TESTS =====
 
-// Test: LoadModel with valid ResNet model (works with OpenCV DNN)
-TEST_F(DetectorServerNeuralNetworkTest, LoadValidResNetModel) {
-  ASSERT_TRUE(resnet_options_->IsValid());
+// Test: LoadModel with valid YOLOv7 model (works with OpenCV DNN)
+TEST_F(DetectorServerNeuralNetworkTest, LoadValidYoloModel) {
+  ASSERT_TRUE(yolo_options_->IsValid());
 
-  DetectorServer server(std::move(*resnet_options_));
+  DetectorServer server(std::move(*yolo_options_));
 
-  // Initialize should succeed with valid ResNet model (tests LoadModel
+  // Initialize should succeed with valid YOLOv7 model (tests LoadModel
   // internally)
   EXPECT_NO_THROW({ server.Initialize(); });
 
   // Clean shutdown
   EXPECT_NO_THROW({ server.Shutdown(); });
-}
-
-// Test: LoadModel with ViT model (has OpenCV compatibility issues)
-TEST_F(DetectorServerNeuralNetworkTest, LoadVitModelWithCompatibilityIssues) {
-  ASSERT_TRUE(vit_options_->IsValid());
-
-  DetectorServer server(std::move(*vit_options_));
-
-  // ViT model has dynamic shapes that OpenCV DNN doesn't support
-  // This test verifies proper error handling for unsupported models
-  EXPECT_THROW({ server.Initialize(); }, std::runtime_error);
 }
 
 // Test: LoadModel with invalid model path
@@ -453,9 +431,9 @@ TEST_F(DetectorServerNeuralNetworkTest, LoadCorruptedModel) {
 
 // Test: PreprocessFrame functionality through initialization patterns
 TEST_F(DetectorServerNeuralNetworkTest, PreprocessFrameValidation) {
-  ASSERT_TRUE(resnet_options_->IsValid());
+  ASSERT_TRUE(yolo_options_->IsValid());
 
-  DetectorServer server(std::move(*resnet_options_));
+  DetectorServer server(std::move(*yolo_options_));
 
   // Successful initialization implies:
   // 1. LoadModel worked correctly
@@ -471,11 +449,11 @@ TEST_F(DetectorServerNeuralNetworkTest, PreprocessFrameValidation) {
 
 // Test: RunInference functionality through model compatibility
 TEST_F(DetectorServerNeuralNetworkTest, RunInferenceCompatibility) {
-  // Test ResNet model for inference compatibility
-  ASSERT_TRUE(resnet_options_->IsValid());
+  // Test YOLOv7 model for inference compatibility
+  ASSERT_TRUE(yolo_options_->IsValid());
 
   // Create a copy of options for this test
-  std::string model_path = resnet_options_->Get<std::string>("model");
+  std::string model_path = yolo_options_->Get<std::string>("model");
   std::string model_arg = "--model=" + model_path;
   const char* test_argv[] = {"test_program", "--address=localhost:50066",
                              model_arg.c_str()};
@@ -536,10 +514,10 @@ TEST_F(DetectorServerNeuralNetworkTest, MultipleServerInstances) {
 
   std::vector<std::unique_ptr<DetectorServer>> servers;
 
-  // Create servers with ResNet model and different ports
+  // Create servers with YOLOv7 model and different ports
   std::vector<std::pair<std::string, int>> model_configs = {
-      {"/workspaces/test/models/resnet50.onnx", 50070},
-      {"/workspaces/test/models/resnet50.onnx", 50071}};
+      {"/workspaces/test/models/yolov7x.weights", 50070},
+      {"/workspaces/test/models/yolov7x.weights", 50071}};
 
   for (auto& [model_path, port] : model_configs) {
     std::string address = "--address=localhost:" + std::to_string(port);
@@ -567,9 +545,9 @@ TEST_F(DetectorServerNeuralNetworkTest, MultipleServerInstances) {
 
 // Test: Network backend/target configuration
 TEST_F(DetectorServerNeuralNetworkTest, NetworkBackendConfiguration) {
-  ASSERT_TRUE(resnet_options_->IsValid());
+  ASSERT_TRUE(yolo_options_->IsValid());
 
-  DetectorServer server(std::move(*resnet_options_));
+  DetectorServer server(std::move(*yolo_options_));
 
   // Successful initialization implies:
   // 1. setPreferableBackend(DNN_BACKEND_OPENCV) succeeded
@@ -585,7 +563,7 @@ TEST_F(DetectorServerNeuralNetworkTest, NetworkBackendConfiguration) {
 // Test: Preprocessing parameters validation
 TEST_F(DetectorServerNeuralNetworkTest, PreprocessingParametersValidation) {
   // This test validates that the preprocessing parameters are correctly set
-  // by checking that initialization succeeds with ResNet (224x224)
+  // by checking that initialization succeeds with YOLOv7 (640x640)
 
   struct ModelTestCase {
     std::string name;
@@ -594,8 +572,8 @@ TEST_F(DetectorServerNeuralNetworkTest, PreprocessingParametersValidation) {
   };
 
   std::vector<ModelTestCase> test_cases = {
-      {"ResNet-50", "/workspaces/test/models/resnet50.onnx",
-       cv::Size(224, 224)}};
+      {"YOLOv7", "/workspaces/test/models/yolov7x.weights",
+       cv::Size(640, 640)}};
 
   for (size_t i = 0; i < test_cases.size(); ++i) {
     SCOPED_TRACE("Testing " + test_cases[i].name);

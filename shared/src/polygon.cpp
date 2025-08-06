@@ -1,5 +1,7 @@
 #include "polygon.h"
 
+#include <algorithm>
+#include <cmath>
 #include <utility>
 
 namespace aa::shared {
@@ -98,6 +100,84 @@ void Polygon::Scale(double scale_x, double scale_y) {
     vertex.SetX(vertex.GetX() * scale_x);
     vertex.SetY(vertex.GetY() * scale_y);
   }
+}
+
+bool Polygon::Contains(double x, double y) const {
+  int num_vertices = static_cast<int>(vertices_.size());
+  if (num_vertices < 3) {
+    return false;  // A polygon must have at least 3 vertices
+  }
+
+  const double EPSILON = 1e-10;
+
+  // First check if point is exactly on a vertex or edge
+  for (int i = 0; i < num_vertices; i++) {
+    double xi = vertices_[i].GetX();
+    double yi = vertices_[i].GetY();
+
+    // Check if point is exactly on a vertex
+    if (std::abs(x - xi) < EPSILON && std::abs(y - yi) < EPSILON) {
+      return false;  // Points on vertices are considered outside
+    }
+
+    // Check if point is on an edge
+    int j = (i + 1) % num_vertices;
+    double xj = vertices_[j].GetX();
+    double yj = vertices_[j].GetY();
+
+    // Check if point lies on the line segment between vertices[i] and
+    // vertices[j]
+    if (IsPointOnLineSegment(x, y, xi, yi, xj, yj)) {
+      return false;  // Points on edges are considered outside
+    }
+  }
+
+  // Ray casting algorithm for interior points
+  bool inside = false;
+  int j = num_vertices - 1;
+
+  for (int i = 0; i < num_vertices; i++) {
+    double xi = vertices_[i].GetX();
+    double yi = vertices_[i].GetY();
+    double xj = vertices_[j].GetX();
+    double yj = vertices_[j].GetY();
+
+    // Check if ray crosses the edge from vertices[j] to vertices[i]
+    if (((yi > y) != (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) {
+      inside = !inside;
+    }
+    j = i;
+  }
+
+  return inside;
+}
+
+bool Polygon::Contains(const Point& point) const {
+  return Contains(point.GetX(), point.GetY());
+}
+
+bool Polygon::IsPointOnLineSegment(double px, double py, double x1, double y1,
+                                   double x2, double y2) const {
+  const double EPSILON = 1e-10;
+
+  // Check if point is within the bounding box of the line segment
+  double min_x = std::min(x1, x2);
+  double max_x = std::max(x1, x2);
+  double min_y = std::min(y1, y2);
+  double max_y = std::max(y1, y2);
+
+  if (px < min_x - EPSILON || px > max_x + EPSILON || py < min_y - EPSILON ||
+      py > max_y + EPSILON) {
+    return false;
+  }
+
+  // Check if point lies on the line using cross product
+  // Vector from (x1,y1) to (x2,y2): (x2-x1, y2-y1)
+  // Vector from (x1,y1) to (px,py): (px-x1, py-y1)
+  // Cross product: (x2-x1)*(py-y1) - (y2-y1)*(px-x1)
+  double cross_product = (x2 - x1) * (py - y1) - (y2 - y1) * (px - x1);
+
+  return std::abs(cross_product) < EPSILON;
 }
 
 }  // namespace aa::shared

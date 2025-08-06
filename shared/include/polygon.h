@@ -104,7 +104,35 @@ class Polygon {
    */
   void Scale(double scale_x, double scale_y);
 
+  /**
+   * @brief Check if a point is inside the polygon using ray casting algorithm
+   * @param x X coordinate of the point to test
+   * @param y Y coordinate of the point to test
+   * @return true if the point is inside the polygon, false otherwise
+   */
+  bool Contains(double x, double y) const;
+
+  /**
+   * @brief Check if a point is inside the polygon using ray casting algorithm
+   * @param point Point to test for containment
+   * @return true if the point is inside the polygon, false otherwise
+   */
+  bool Contains(const Point& point) const;
+
  private:
+  /**
+   * @brief Helper method to check if a point lies on a line segment
+   * @param px X coordinate of point to test
+   * @param py Y coordinate of point to test
+   * @param x1 X coordinate of line segment start
+   * @param y1 Y coordinate of line segment start
+   * @param x2 X coordinate of line segment end
+   * @param y2 Y coordinate of line segment end
+   * @return true if point lies on the line segment, false otherwise
+   */
+  bool IsPointOnLineSegment(double px, double py, double x1, double y1,
+                            double x2, double y2) const;
+
   std::vector<Point>
       vertices_;  ///< List of points defining the polygon boundary
   PolygonType type_{

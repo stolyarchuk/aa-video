@@ -262,4 +262,102 @@ TEST(PolygonScaleTest, EmptyPolygon) {
   EXPECT_EQ(polygon.GetTargetClasses(), target_classes);
 }
 
+// Test Polygon Contains method
+TEST(PolygonContainsTest, SquarePolygon) {
+  // Create a square polygon: (0,0), (4,0), (4,4), (0,4)
+  std::vector<Point> vertices = {Point{0.0, 0.0}, Point{4.0, 0.0},
+                                 Point{4.0, 4.0}, Point{0.0, 4.0}};
+  Polygon square{vertices, PolygonType::INCLUSION, 1, {}};
+
+  // Test points clearly inside
+  EXPECT_TRUE(square.Contains(2.0, 2.0));  // Center
+  EXPECT_TRUE(square.Contains(1.0, 1.0));  // Inside
+  EXPECT_TRUE(square.Contains(3.0, 3.0));  // Inside
+
+  // Test points clearly outside
+  EXPECT_FALSE(square.Contains(-1.0, 2.0));  // Left of square
+  EXPECT_FALSE(square.Contains(5.0, 2.0));   // Right of square
+  EXPECT_FALSE(square.Contains(2.0, -1.0));  // Below square
+  EXPECT_FALSE(square.Contains(2.0, 5.0));   // Above square
+
+  // Test corner points (typically considered outside)
+  EXPECT_FALSE(square.Contains(0.0, 0.0));  // Bottom-left corner
+  EXPECT_FALSE(square.Contains(4.0, 0.0));  // Bottom-right corner
+  EXPECT_FALSE(square.Contains(4.0, 4.0));  // Top-right corner
+  EXPECT_FALSE(square.Contains(0.0, 4.0));  // Top-left corner
+
+  // Test edge points (typically considered outside)
+  EXPECT_FALSE(square.Contains(2.0, 0.0));  // Bottom edge
+  EXPECT_FALSE(square.Contains(4.0, 2.0));  // Right edge
+  EXPECT_FALSE(square.Contains(2.0, 4.0));  // Top edge
+  EXPECT_FALSE(square.Contains(0.0, 2.0));  // Left edge
+}
+
+TEST(PolygonContainsTest, TrianglePolygon) {
+  // Create a triangle: (0,0), (4,0), (2,3)
+  std::vector<Point> vertices = {Point{0.0, 0.0}, Point{4.0, 0.0},
+                                 Point{2.0, 3.0}};
+  Polygon triangle{vertices, PolygonType::INCLUSION, 1, {}};
+
+  // Test points inside triangle
+  EXPECT_TRUE(triangle.Contains(2.0, 1.0));  // Center area
+  EXPECT_TRUE(triangle.Contains(1.5, 0.5));  // Inside
+  EXPECT_TRUE(triangle.Contains(2.5, 0.5));  // Inside
+
+  // Test points outside triangle
+  EXPECT_FALSE(triangle.Contains(-1.0, 1.0));  // Left of triangle
+  EXPECT_FALSE(triangle.Contains(5.0, 1.0));   // Right of triangle
+  EXPECT_FALSE(triangle.Contains(2.0, 4.0));   // Above triangle
+  EXPECT_FALSE(triangle.Contains(0.0, 2.0));   // Outside left side
+  EXPECT_FALSE(triangle.Contains(4.0, 2.0));   // Outside right side
+}
+
+TEST(PolygonContainsTest, ContainsPointObject) {
+  // Create a simple square
+  std::vector<Point> vertices = {Point{0.0, 0.0}, Point{2.0, 0.0},
+                                 Point{2.0, 2.0}, Point{0.0, 2.0}};
+  Polygon square{vertices, PolygonType::INCLUSION, 1, {}};
+
+  // Test Contains(Point) overload
+  Point inside_point{1.0, 1.0};
+  Point outside_point{3.0, 3.0};
+
+  EXPECT_TRUE(square.Contains(inside_point));
+  EXPECT_FALSE(square.Contains(outside_point));
+}
+
+TEST(PolygonContainsTest, InvalidPolygons) {
+  // Test polygon with less than 3 vertices
+  std::vector<Point> invalid_vertices = {Point{0.0, 0.0}, Point{1.0, 1.0}};
+  Polygon invalid_polygon{invalid_vertices, PolygonType::INCLUSION, 1, {}};
+
+  EXPECT_FALSE(invalid_polygon.Contains(0.5, 0.5));
+
+  // Test empty polygon
+  Polygon empty_polygon;
+  EXPECT_FALSE(empty_polygon.Contains(0.0, 0.0));
+}
+
+TEST(PolygonContainsTest, ComplexPolygon) {
+  // Create an L-shaped polygon
+  std::vector<Point> vertices = {Point{0.0, 0.0}, Point{3.0, 0.0},
+                                 Point{3.0, 1.0}, Point{1.0, 1.0},
+                                 Point{1.0, 3.0}, Point{0.0, 3.0}};
+  Polygon l_shape{vertices, PolygonType::INCLUSION, 1, {}};
+
+  // Test points in different parts of the L
+  EXPECT_TRUE(l_shape.Contains(0.5, 0.5));  // Bottom part
+  EXPECT_TRUE(l_shape.Contains(2.5, 0.5));  // Bottom right part
+  EXPECT_TRUE(l_shape.Contains(0.5, 2.5));  // Top left part
+
+  // Test points in the "notch" of the L (should be outside)
+  EXPECT_FALSE(l_shape.Contains(2.0, 2.0));  // In the notch area
+  EXPECT_FALSE(l_shape.Contains(2.5, 1.5));  // In the notch area
+
+  // Test points clearly outside
+  EXPECT_FALSE(l_shape.Contains(-1.0, 1.0));  // Left of polygon
+  EXPECT_FALSE(l_shape.Contains(4.0, 1.0));   // Right of polygon
+  EXPECT_FALSE(l_shape.Contains(1.0, 4.0));   // Above polygon
+}
+
 }  // namespace aa::shared
