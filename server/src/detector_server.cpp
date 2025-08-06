@@ -247,6 +247,8 @@ grpc::Status DetectorServer::ProcessFrame(
     if (request->polygons_size() == 0) {
       AA_LOG_ERROR("No polygons provided in request");
       response->set_success(false);
+      return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT,
+                          "No polygons provided in request");
     }
 
     std::vector<aa::shared::Polygon> polygons;
@@ -270,6 +272,8 @@ grpc::Status DetectorServer::ProcessFrame(
       AA_LOG_ERROR(
           "No valid polygons found after filtering out UNSPECIFIED types");
       response->set_success(false);
+      return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT,
+                          "No valid polygons found");
     }
 
     std::sort(polygons.begin(), polygons.end(),
@@ -313,6 +317,8 @@ grpc::Status DetectorServer::ProcessFrame(
     if (preprocessed_blob.empty()) {
       AA_LOG_ERROR("Failed to preprocess frame");
       response->set_success(false);
+      return grpc::Status(grpc::StatusCode::INTERNAL,
+                          "Failed to preprocess frame");
     }
 
     // Step 2: Run inference using YOLOv7 model
@@ -322,6 +328,8 @@ grpc::Status DetectorServer::ProcessFrame(
     if (network_output.empty()) {
       AA_LOG_ERROR("Failed to run inference on preprocessed blob");
       response->set_success(false);
+      return grpc::Status(grpc::StatusCode::INTERNAL,
+                          "Failed to run inference");
     }
 
     // Step 3: Post-process results to extract detections
@@ -330,8 +338,14 @@ grpc::Status DetectorServer::ProcessFrame(
             network_output, resized_frame, scaled_polygons);
 
     // Step 4: Populate response with detection results
-    // TODO: Convert detections to protobuf response format
-    // For now, just set success status
+
+    // Convert the original input frame back to protobuf format
+    auto result_frame = aa::shared::Frame(input_frame);
+    auto proto_result_frame = result_frame.ToProto();
+
+    // Set the result frame in the response
+    response->mutable_result()->CopyFrom(proto_result_frame);
+    response->set_success(true);
 
     AA_LOG_INFO("Processed frame successfully. Found " << detections.size()
                                                        << " detections.");

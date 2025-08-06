@@ -1,6 +1,6 @@
 # AA Video Processing System
 
-A modern C++ video processing system with gRPC-based client-server architecture for real-time object detection and classification using deep neural networks.
+A modern C++ video processing system with gRPC-based client-server architecture for real-time object detection using YOLO neural networks with polygon-based detection zones.
 
 ## Project Structure
 
@@ -59,8 +59,11 @@ aa_video_processing/
 - **gRPC** for high-performance client-server communication
 - **Protocol Buffers** for efficient data serialization
 - **OpenCV 4.8.1** with DNN module for computer vision
-- **YOLOv7** model support for object detection
-- **Polygon-based detection zones** (inclusion/exclusion areas)
+- **YOLO object detection** with COCO dataset support (80 classes)
+- **Polygon-based detection zones** with inclusion/exclusion areas and priority-based adjudication
+- **Non-Maximum Suppression** for duplicate detection filtering
+- **Letterboxing preprocessing** for maintaining aspect ratios
+- **Coordinate scaling** with letterbox-aware transformations
 - **CMake 3.20+** modular build system
 - **Google Test** comprehensive unit testing
 - **Doxygen** API documentation generation
@@ -160,9 +163,20 @@ Use the predefined tasks for development:
 Run the detector server with a neural network model:
 
 ```bash
-# Using YOLOv7 for object detection
+# Using YOLO for object detection (supports both .weights+.cfg and .onnx formats)
 ./build/server/detector_server \
     --model=./models/yolov7x.weights \
+    --cfg=./models/yolov7.cfg \
+    --width=640 \
+    --height=640 \
+    --address=localhost:50051 \
+    --verbose=true
+
+# Using ONNX format
+./build/server/detector_server \
+    --model=./models/yolov7.onnx \
+    --width=640 \
+    --height=640 \
     --address=localhost:50051 \
     --verbose=true
 ```
@@ -172,34 +186,41 @@ Run the detector server with a neural network model:
 Connect to the server and process frames:
 
 ```bash
-# Connect to server and process input
+# Connect to server and process input image
 ./build/client/detector_client \
     --address=localhost:50051 \
-    --input=/path/to/video.mp4 \
-    --confidence=0.7
+    --input=input/000000039769.jpg \
+    --width=640 \
+    --height=640 \
+    --verbose=true
 
-# Use webcam input
+# Process with custom confidence threshold
 ./build/client/detector_client \
     --address=localhost:50051 \
-    --input=0
+    --input=/path/to/image.jpg \
+    --width=640 \
+    --height=640 \
+    --verbose=true
 ```
 
 ### Command Line Options
 
 #### Server Options
 
-- `--model` - Path to ONNX model file (REQUIRED)
+- `--model` - Path to YOLO model file (.weights, .onnx) (REQUIRED)
+- `--cfg` - Path to YOLO configuration file (.cfg) (Required for .weights format)
+- `--width` - Network input width (default: 640)
+- `--height` - Network input height (default: 640)
 - `--address` - Server bind address (default: localhost:50051)
 - `--verbose` - Enable verbose logging (default: false)
 
 #### Client Options
 
 - `--address` - Server address to connect (default: localhost:50051)
-- `--input` - Input source: file path, camera index, or URL
-- `--confidence` - Detection confidence threshold (0.0-1.0)
+- `--input` - Input image file path (REQUIRED for client)
 - `--width` - Frame width for processing (default: 640)
-- `--height` - Frame height for processing (default: 480)
-- `--verbose` - Enable verbose logging
+- `--height` - Frame height for processing (default: 640)
+- `--verbose` - Enable verbose logging (default: false)
 
 ## Running Tests
 
@@ -216,6 +237,47 @@ ctest --test-dir build --output-on-failure
 ./build/tests/test_detector_server
 ./build/tests/test_options
 ./build/tests/test_signal_set
+./build/tests/test_polygon
+./build/tests/test_frame
+```
+
+## Polygon-Based Detection System
+
+The server supports sophisticated polygon-based detection zones with the following features:
+
+### Polygon Types
+
+- **Inclusion Zones**: Only detect objects within these polygonal areas
+- **Exclusion Zones**: Block all detections within these polygonal areas
+- **Priority System**: Higher priority polygons override lower priority ones in overlapping regions
+
+### Polygon Configuration
+
+Each polygon can specify:
+
+- **Type**: `INCLUSION` or `EXCLUSION`
+- **Priority**: Integer value (higher = more important)
+- **Target Classes**: List of COCO class IDs to detect (empty = all classes)
+- **Vertices**: Array of 2D points defining the polygon shape
+
+### Detection Logic
+
+1. **Object Detection**: YOLO processes the entire frame
+2. **Center Point Testing**: Each detection's center point is tested against all polygons
+3. **Priority Resolution**: If multiple polygons contain a point, highest priority wins
+4. **Class Filtering**: Detections are filtered based on polygon's target class list
+5. **Final Results**: Only approved detections are included in the response
+
+### Example Workflow
+
+```text
+Input Frame → YOLO Detection → Polygon Filtering → Final Results
+     │              │                  │               │
+     │         Bounding Boxes     Priority-based    Filtered
+     │         + Confidence       Class Filtering   Detections
+     │         + Class IDs                              │
+     └─────────────────────────────────────────────────┘
+                   Returned to Client
 ```
 
 ## Documentation
@@ -240,15 +302,17 @@ xdg-open build/docs/html/index.html
 
 The system uses the following gRPC services:
 
-- **DetectorService** - Main video processing service
+- **DetectorService** - Main object detection service
   - `ProcessFrame(ProcessFrameRequest) → ProcessFrameResponse`
   - `CheckHealth(CheckHealthRequest) → CheckHealthResponse`
 
 Key message types:
 
-- `Frame` - Video frame data (compatible with OpenCV Mat)
+- `Frame` - Image/video frame data (compatible with OpenCV Mat)
 - `Point` - 2D coordinates for polygon vertices
-- `Polygon` - Detection zones (inclusion/exclusion areas)
+- `Polygon` - Detection zones with inclusion/exclusion rules, priorities, and target class filters
+- `ProcessFrameRequest` - Contains frame and polygon definitions
+- `ProcessFrameResponse` - Returns processed frame and detection results
 
 ### Architecture Overview
 
@@ -256,9 +320,10 @@ Key message types:
 ┌─────────────────┐    gRPC     ┌─────────────────┐
 │  Client App     │◄────────────┤  Server App     │
 │                 │             │                 │
-│ - Frame capture │             │ - Model loading │
-│ - Result display│             │ - Inference     │
-│ - User controls │             │ - Detection     │
+│ - Frame capture │             │ - YOLO loading  │
+│ - Polygon setup │             │ - Inference     │
+│ - Result display│             │ - NMS filtering │
+│ - User controls │             │ - Polygon zones │
 └─────────────────┘             └─────────────────┘
          │                               │
          │                               │
@@ -267,8 +332,9 @@ Key message types:
     │ Library │                     │ Library │
     │         │                     │         │
     │ - Protobuf messages           │ - OpenCV DNN
-    │ - Common utilities            │ - Neural networks
-    │ - Logging system              │ - Signal handling
+    │ - Frame/Polygon classes       │ - YOLO networks
+    │ - Common utilities            │ - Signal handling
+    │ - Logging system              │ - Detection logic
     └─────────┘                     └─────────┘
 ```
 
@@ -326,10 +392,13 @@ The project follows **Google C++ Style Guide** with modern C++23 features:
 
 #### Adding New Neural Network Models
 
-1. **Format**: Use ONNX format for cross-platform compatibility
+1. **Format**: YOLO models (.weights + .cfg) or ONNX format for cross-platform compatibility
 2. **Location**: Place models in `models/` directory
-3. **Integration**: Update server preprocessing/postprocessing for new model
+3. **Integration**: Update server preprocessing/postprocessing for new model input sizes
 4. **Documentation**: Update model-specific parameters and usage
+5. **COCO Classes**: Current implementation supports 80 COCO object classes (0-79):
+   - Person, Vehicle, Animal, Furniture, Electronics, Sports, Food, and more
+   - See [COCO dataset documentation](https://cocodataset.org/#explore) for complete class list
 
 ### Development Environment
 
@@ -357,10 +426,22 @@ The project follows **Google C++ Style Guide** with modern C++23 features:
 
 Supported neural network models:
 
-- **YOLOv7** - Object detection (640x640 input)
+- **YOLO (v3/v7)** - Object detection with COCO dataset (80 classes)
+  - Input size: 640x640 (configurable)
   - Inference time: ~100-200ms on CPU
-  - Memory usage: ~150MB
-  - Use case: Real-time object detection with COCO classes (0-79)
+  - Memory usage: ~150-300MB depending on model size
+  - Output: Bounding boxes with confidence scores and class IDs (0-79)
+  - Features: Letterboxing preprocessing, NMS post-processing, coordinate scaling
+
+### Detection Features
+
+- **Polygon-based filtering**: Define arbitrary shaped detection zones
+- **Inclusion zones**: Detect specified object classes within polygon areas
+- **Exclusion zones**: Block all detections within polygon areas
+- **Priority-based adjudication**: Higher priority polygons override lower priority ones
+- **Class-specific filtering**: Target specific COCO object classes per polygon
+- **Non-Maximum Suppression**: Removes duplicate detections with configurable IoU threshold
+- **Confidence thresholding**: Filters detections below minimum confidence (0.25)
 
 ### System Requirements
 
@@ -384,20 +465,25 @@ Supported neural network models:
 # Build production image
 docker build -t aa-video-processing:latest .
 
-# Run server container
+# Run server container with YOLO model
 docker run -d \
     --name detector-server \
     -p 50051:50051 \
     -v ./models:/app/models:ro \
     aa-video-processing:latest \
-    ./detector_server --model=/app/models/yolov7x.weights
+    ./detector_server \
+    --model=/app/models/yolov7x.weights \
+    --cfg=/app/models/yolov7.cfg \
+    --width=640 --height=640
 
 # Run client container
 docker run -it --rm \
     --network host \
     -v ./input:/app/input:ro \
     aa-video-processing:latest \
-    ./detector_client --input=/app/input/video.mp4
+    ./detector_client \
+    --input=/app/input/image.jpg \
+    --width=640 --height=640
 ```
 
 #### Cross-Compilation (Planned)
@@ -429,13 +515,16 @@ sudo apt install libopencv-contrib-dev
 
 ```bash
 # Model file not found
-./detector_server --model=./models/yolov7x.weights  # Check path
+./detector_server --model=./models/yolov7x.weights --cfg=./models/yolov7.cfg
 
 # Port already in use
-./detector_server --address=localhost:50052       # Use different port
+./detector_server --model=./models/yolov7x.weights --address=localhost:50052
 
 # Verbose logging for debugging
-./detector_server --model=./models/yolov7x.weights --verbose=true
+./detector_server --model=./models/yolov7x.weights --cfg=./models/yolov7.cfg --verbose=true
+
+# Client connection issues
+./detector_client --input=input/000000039769.jpg --address=localhost:50051 --verbose=true
 ```
 
 #### Performance Issues
@@ -450,10 +539,10 @@ Enable verbose logging for detailed diagnostic information:
 
 ```bash
 # Server debugging
-./detector_server --model=./models/yolov7x.weights --verbose=true
+./detector_server --model=./models/yolov7x.weights --cfg=./models/yolov7.cfg --verbose=true
 
 # Client debugging
-./detector_client --address=localhost:50051 --verbose=true
+./detector_client --input=input/000000039769.jpg --address=localhost:50051 --verbose=true
 ```
 
 Log levels available:
