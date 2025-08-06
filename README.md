@@ -43,8 +43,10 @@ aa_video_processing/
 │   ├── test_options.cpp
 │   └── test_signal_set.cpp
 ├── models/                 # Neural network models
-│   ├── resnet50.onnx
-│   └── vit-base-patch16-224.onnx
+│   ├── yolov7x.weights
+│   ├── yolov7.cfg
+│   ├── yolov3.weights
+│   └── yolov3.cfg
 ├── build/                  # Build directory (generated)
 ├── Dockerfile              # Container configuration
 ├── Doxyfile               # Documentation configuration
@@ -57,7 +59,7 @@ aa_video_processing/
 - **gRPC** for high-performance client-server communication
 - **Protocol Buffers** for efficient data serialization
 - **OpenCV 4.8.1** with DNN module for computer vision
-- **ResNet and ViT** model support for object detection/classification
+- **YOLOv7** model support for object detection
 - **Polygon-based detection zones** (inclusion/exclusion areas)
 - **CMake 3.20+** modular build system
 - **Google Test** comprehensive unit testing
@@ -158,16 +160,11 @@ Use the predefined tasks for development:
 Run the detector server with a neural network model:
 
 ```bash
-# Using ResNet-50 for classification
+# Using YOLOv7 for object detection
 ./build/server/detector_server \
-    --model=./models/resnet50.onnx \
+    --model=./models/yolov7x.weights \
     --address=localhost:50051 \
     --verbose=true
-
-# Using Vision Transformer
-./build/server/detector_server \
-    --model=./models/vit-base-patch16-224.onnx \
-    --address=localhost:50052
 ```
 
 ### Running the Client
@@ -360,15 +357,10 @@ The project follows **Google C++ Style Guide** with modern C++23 features:
 
 Supported neural network models:
 
-- **ResNet-50** - Image classification (224x224 input)
-  - Inference time: ~50-100ms on CPU
-  - Memory usage: ~100MB
-  - Use case: General object classification
-
-- **Vision Transformer (ViT)** - Advanced image classification
+- **YOLOv7** - Object detection (640x640 input)
   - Inference time: ~100-200ms on CPU
-  - Memory usage: ~200MB
-  - Use case: High-accuracy classification tasks
+  - Memory usage: ~150MB
+  - Use case: Real-time object detection with COCO classes (0-79)
 
 ### System Requirements
 
@@ -398,7 +390,7 @@ docker run -d \
     -p 50051:50051 \
     -v ./models:/app/models:ro \
     aa-video-processing:latest \
-    ./detector_server --model=/app/models/resnet50.onnx
+    ./detector_server --model=/app/models/yolov7x.weights
 
 # Run client container
 docker run -it --rm \
@@ -437,13 +429,13 @@ sudo apt install libopencv-contrib-dev
 
 ```bash
 # Model file not found
-./detector_server --model=./models/resnet50.onnx  # Check path
+./detector_server --model=./models/yolov7x.weights  # Check path
 
 # Port already in use
 ./detector_server --address=localhost:50052       # Use different port
 
 # Verbose logging for debugging
-./detector_server --model=./models/resnet50.onnx --verbose=true
+./detector_server --model=./models/yolov7x.weights --verbose=true
 ```
 
 #### Performance Issues
@@ -458,7 +450,7 @@ Enable verbose logging for detailed diagnostic information:
 
 ```bash
 # Server debugging
-./detector_server --model=./models/resnet50.onnx --verbose=true
+./detector_server --model=./models/yolov7x.weights --verbose=true
 
 # Client debugging
 ./detector_client --address=localhost:50051 --verbose=true

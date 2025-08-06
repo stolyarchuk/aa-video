@@ -91,7 +91,7 @@ TEST_F(OptionsTest, BasicConstruction) {
   // Test default values
   EXPECT_EQ(options->Get<std::string>("input"), "<NONE>");
   EXPECT_EQ(options->Get<int>("width"), 640);
-  EXPECT_EQ(options->Get<int>("height"), 480);
+  EXPECT_EQ(options->Get<int>("height"), 640);
   EXPECT_EQ(options->Get<double>("confidence"), 0.5);
   EXPECT_EQ(options->Get<std::string>("address"), "localhost:50051");
   EXPECT_FALSE(options->IsVerbose());

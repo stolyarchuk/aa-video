@@ -30,6 +30,32 @@ class Polygon {
   Polygon() = default;
 
   /**
+   * @brief Copy constructor - performs deep copy
+   * @param other Polygon to copy from
+   */
+  Polygon(const Polygon& other);
+
+  /**
+   * @brief Move constructor
+   * @param other Polygon to move from
+   */
+  Polygon(Polygon&& other) noexcept;
+
+  /**
+   * @brief Copy assignment operator - performs deep copy
+   * @param other Polygon to copy from
+   * @return Reference to this Polygon
+   */
+  Polygon& operator=(const Polygon& other);
+
+  /**
+   * @brief Move assignment operator
+   * @param other Polygon to move from
+   * @return Reference to this Polygon
+   */
+  Polygon& operator=(Polygon&& other) noexcept;
+
+  /**
    * @brief Constructor with polygon parameters
    * @param vertices List of points defining the polygon boundary
    * @param type Type of polygon (inclusion or exclusion)
@@ -71,7 +97,42 @@ class Polygon {
     target_classes_ = std::move(target_classes);
   }
 
+  /**
+   * @brief Scale polygon vertices by given factors
+   * @param scale_x Scaling factor for X coordinates
+   * @param scale_y Scaling factor for Y coordinates
+   */
+  void Scale(double scale_x, double scale_y);
+
+  /**
+   * @brief Check if a point is inside the polygon using ray casting algorithm
+   * @param x X coordinate of the point to test
+   * @param y Y coordinate of the point to test
+   * @return true if the point is inside the polygon, false otherwise
+   */
+  bool Contains(double x, double y) const;
+
+  /**
+   * @brief Check if a point is inside the polygon using ray casting algorithm
+   * @param point Point to test for containment
+   * @return true if the point is inside the polygon, false otherwise
+   */
+  bool Contains(const Point& point) const;
+
  private:
+  /**
+   * @brief Helper method to check if a point lies on a line segment
+   * @param px X coordinate of point to test
+   * @param py Y coordinate of point to test
+   * @param x1 X coordinate of line segment start
+   * @param y1 Y coordinate of line segment start
+   * @param x2 X coordinate of line segment end
+   * @param y2 Y coordinate of line segment end
+   * @return true if point lies on the line segment, false otherwise
+   */
+  bool IsPointOnLineSegment(double px, double py, double x1, double y1,
+                            double x2, double y2) const;
+
   std::vector<Point>
       vertices_;  ///< List of points defining the polygon boundary
   PolygonType type_{

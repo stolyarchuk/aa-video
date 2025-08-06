@@ -8,8 +8,9 @@ namespace aa::client {
 template <class Impl>
 class RpcClient {
  public:
-  explicit RpcClient(std::string_view remote, std::size_t timeout = 100)
-      : channel_{CreateChannel(remote.data(), grpc::InsecureChannelCredentials())},
+  explicit RpcClient(std::string_view remote, std::size_t timeout = 10000)
+      : channel_{CreateChannel(remote.data(),
+                               grpc::InsecureChannelCredentials())},
         service_stub_{std::make_unique<typename Impl::Stub>(channel_)} {
     timeout > 0 ? timeout_ = timeout : timeout_ = 100;
   }
@@ -24,11 +25,13 @@ class RpcClient {
     grpc::ClientContext ctx;
     SetRequestDeadline(&ctx);
 
-    return std::invoke(std::forward<Func>(func), *service_stub_, &ctx, req, res);
+    return std::invoke(std::forward<Func>(func), *service_stub_, &ctx, req,
+                       res);
   }
 
   template <typename Req, typename Func, typename Res>
-  std::unique_ptr<grpc::ClientWriter<Req>> CreateWriter(Func&& func, grpc::ClientContext* ctx, Res* res) {
+  std::unique_ptr<grpc::ClientWriter<Req>> CreateWriter(
+      Func&& func, grpc::ClientContext* ctx, Res* res) {
     return std::invoke(std::forward<Func>(func), *service_stub_, ctx, res);
   }
 

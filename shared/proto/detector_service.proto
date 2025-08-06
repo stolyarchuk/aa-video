@@ -16,6 +16,7 @@ message ProcessFrameRequest {
 // Processing response
 message ProcessFrameResponse {
   Frame result = 1;
+  bool success = 2;  // Indicates if processing was successful
 }
 
 // Health check
