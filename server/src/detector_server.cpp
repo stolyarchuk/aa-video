@@ -63,12 +63,10 @@ void DetectorServer::InitializeNetwork() {
 bool DetectorServer::LoadModel() {
   try {
     auto model_path = options_.Get<std::string>("model");
-    auto cfg_path = options_.Get<std::string>("cfg");
-    AA_LOG_INFO("Loading model from: " << model_path
-                                       << " with config: " << cfg_path);
+    AA_LOG_INFO("Loading model from: " << model_path);
 
     // Load model using OpenCV DNN
-    dnn_network_ = cv::dnn::readNet(model_path, cfg_path);
+    dnn_network_ = cv::dnn::readNetFromONNX(model_path);
 
     if (dnn_network_.empty()) {
       AA_LOG_ERROR("Failed to load model: network is empty");

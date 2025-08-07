@@ -14,7 +14,6 @@ const cv::String keys =
     "{height ht      | 640  | Frame height for processing}"
     "{confidence c   | 0.5  | Confidence threshold for detection (0.0-1.0)}"
     "{model m        |<NONE>| Path to detection model file (REQUIRED)}"
-    "{cfg            |<NONE>| Path to YOLOv7 configuration file (optional)}"
     "{address a      | localhost:50051 | Server address for gRPC "
     "communication}"
     "{verbose v      | false| Enable verbose output}";
