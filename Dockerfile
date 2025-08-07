@@ -1,5 +1,8 @@
 FROM ubuntu:24.04 AS builder
 
+ENV DEBIAN_FRONTEND=noninteractive \
+    APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=DontWarn
+
 # Install basic packages and development tools
 RUN apt-get update && apt-get install -y \
     build-essential \
@@ -102,7 +105,9 @@ RUN --mount=type=cache,target=/root/.ccache \
     git clone --depth 1 --branch 4.12.0 https://github.com/opencv/opencv_contrib.git && \
     cd opencv && \
     mkdir build && cd build && \
-    CC="ccache gcc" CXX="ccache g++" cmake -D CMAKE_BUILD_TYPE=RELEASE \
+    cmake \
+    -GNinja\
+    -D CMAKE_BUILD_TYPE=RELEASE \
     -D CMAKE_INSTALL_PREFIX=/usr/local \
     -D INSTALL_PYTHON_EXAMPLES=OFF \
     -D INSTALL_C_EXAMPLES=OFF \
@@ -121,8 +126,8 @@ RUN --mount=type=cache,target=/root/.ccache \
     -D CMAKE_C_COMPILER_LAUNCHER=ccache \
     -D CMAKE_CXX_COMPILER_LAUNCHER=ccache \
     .. && \
-    make -j$(nproc) && \
-    make install && \
+    ninja -j$(nproc) -l4 && \
+    ninja install && \
     ldconfig && \
     cd / && rm -rf /tmp/opencv /tmp/opencv_contrib
 
@@ -193,6 +198,7 @@ RUN apt-get update && apt-get install -y \
 
 # Copy OpenCV libraries from builder stage
 COPY --from=builder /usr/local/lib/libopencv_* /usr/local/lib/
+
 # Copy other OpenCV files from builder stage using a script to handle missing directories
 COPY --from=builder /usr/local /tmp/builder_usr_local/
 RUN mkdir -p /usr/local/lib/pkgconfig /usr/local/include /usr/local/bin /usr/local/share && \
@@ -204,16 +210,9 @@ RUN mkdir -p /usr/local/lib/pkgconfig /usr/local/include /usr/local/bin /usr/loc
 # Update library cache
 RUN ldconfig
 
-# Create non-root user
-RUN groupadd -r appuser && useradd -r -g appuser appuser
-
 # Copy built binaries
 COPY --from=builder /app/build/client/detector_client /usr/local/bin/
 COPY --from=builder /app/build/server/detector_server /usr/local/bin/
 
-# Set working directory and user
-WORKDIR /app
-USER appuser
-
 # Default command
-CMD ["detector_server"]
+CMD ["/bin/bash"]
