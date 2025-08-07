@@ -1,8 +1,8 @@
+ARG USER_NAME=ubuntu
 FROM nvidia/cuda:12.9.1-cudnn-devel-ubuntu24.04 AS base
 
 ARG OPENCV_VERSION=4.12.0
-ARG GRPC_VERSION=1.74.1
-ARG USER_NAME=ubuntu
+ ARG GRPC_VERSION=1.74.1
 
 ENV DEBIAN_FRONTEND=noninteractive \
     APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=DontWarn
@@ -15,6 +15,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     ca-certificates gcc g++ gdb make cmake locales ccache vim ninja-build valgrind autoconf libtool \
     doxygen python3-dev autotools-dev libicu-dev libbz2-dev clang-19 clang-format-19 clang-tidy-19 \
     libgtest-dev libgmock-dev \
+    libprotobuf-dev protobuf-compiler libgrpc-dev libgrpc++-dev protobuf-compiler-grpc \
     yasm gettext  libtool autoconf autopoint automake libgstreamer-plugins-base1.0-dev libgstreamer1.0-dev gstreamer1.0-tools \
     libfreetype6-dev libfreetype6 unzip nasm libharfbuzz-bin libharfbuzz-dev libvpx-dev openssl libgcrypt20-dev libva-dev \
     libavcodec-dev libavdevice-dev libavfilter-dev libavformat-dev libgtk-3-dev \
@@ -28,7 +29,7 @@ RUN --mount=type=cache,target=/root/.ccache \
     cmake \
     -GNinja \
     -DCMAKE_BUILD_TYPE=RELEASE \
-    -DCMAKE_INSTALL_PREFIX=/usr/local/opencv \
+    -DCMAKE_INSTALL_PREFIX=/usr/local \
     -DOPENCV_EXTRA_MODULES_PATH=../opencv_contrib/modules \
     -DEIGEN_INCLUDE_PATH=/usr/include/eigen3 \
     -DOPENCV_ENABLE_NONFREE=OFF \
@@ -53,22 +54,6 @@ RUN --mount=type=cache,target=/root/.ccache \
     -DVIDEOIO_PLUGIN_LIST=gstreamer,ffmpeg \
     ../opencv && \
     ninja -j$(nproc) -l4 && ninja install && \
-    echo "/opt/opencv/lib" > /etc/ld.so.conf.d/opencv.conf && \
-    ldconfig
-
-RUN --mount=type=cache,target=/root/.ccache \
-    git clone --recurse-submodules -b v1.74.1 --depth 1 --shallow-submodules https://github.com/grpc/grpc && \
-    mkdir -p grpc/cmake_build && cd grpc/cmake_build && \
-    cmake \
-    -GNinja \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DgRPC_INSTALL=ON \
-    -DgRPC_BUILD_TESTS=OFF \
-    -DCMAKE_INSTALL_PREFIX=/opt/google/grpc \
-    -DABSL_PROPAGATE_CXX_STD=ON .. && \
-    ninja -j$(nproc) -l4 && ninja install && \
-    cd ../.. && rm -rf grpc && \
-    echo "/opt/google/grpc/lib" > /etc/ld.so.conf.d/grpc.conf && \
     ldconfig
 
 FROM base AS development
