@@ -9,6 +9,7 @@ This is a modern C++ project using CMake as the build system. Please follow thes
 - **C++ Standard**: Use C++23 features and modern C++ best practices
 - **Style Guide**: Follow Google C++ Style Guide with 120 character line limit
 - **Formatting**: Use `.clang-format` configuration for automatic code formatting
+- **Documentation Style**: Be concise and technically professional. No verbose explanations. Use precise, direct language for comments, README files, and documentation.
 - **Naming Conventions** (Google Style):
   - Classes/Types: PascalCase (e.g., `Calculator`, `MyClass`)
   - Functions/Methods: PascalCase (e.g., `AddNumbers`, `GetValue`)
