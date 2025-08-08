@@ -1,4 +1,5 @@
 # Server application for video processing bot
+cmake_policy(SET CMP0146 OLD)
 
 # Source files
 set(SERVER_LIB_SOURCES

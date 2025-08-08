@@ -79,6 +79,7 @@ ipch
 models
 input
 *.sh
+!.devcontainer/*.sh
 debug_*
 *.png
 *.jpg
