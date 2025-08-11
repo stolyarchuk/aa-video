@@ -1,6 +1,6 @@
-# Yolo OpenCV Processing System
+# YoloX OpenCV Processing System
 
-![Yolo OpenCV Processing System](output/output.png)
+![YoloX OpenCV Processing System](output/output.png)
 
 A C++23 video processing system featuring gRPC-based client-server architecture for real-time object detection using YOLO neural networks (YOLOv11, YOLOX). The system provides advanced polygon-based detection zones with priority-based filtering, comprehensive memory safety, and enterprise-grade deployment capabilities.
 
@@ -13,7 +13,7 @@ A C++23 video processing system featuring gRPC-based client-server architecture 
 - **Modern C++23** with Google C++ Style Guide and rigorous memory safety
 - **gRPC & Protocol Buffers** for high-performance client-server communication
 - **OpenCV 4.12.0** with DNN module for computer vision and neural network inference
-- **YOLO Object Detection** with support for YOLOv7, YOLOv10, YOLOv11, and YOLOX models
+- **YOLO Object Detection** with support for YOLOv11, and YOLOX models
 - **GitHub Actions** for complete CI/CD and automated testing
 
 ### Advanced Detection Capabilities
@@ -21,7 +21,7 @@ A C++23 video processing system featuring gRPC-based client-server architecture 
 - **Polygon-based Detection Zones** with inclusion/exclusion areas and priority-based adjudication
 - **Non-Maximum Suppression (NMS)** for duplicate detection filtering with configurable IoU thresholds
 - **Letterboxing Preprocessing** maintains aspect ratios without distortion artifacts
-- **Multi-YOLO Model Support** including YOLOv7 (.weights+.cfg), YOLOv10/v11 (.onnx), and YOLOX (.onnx) formats
+- **Multi-YOLO Model Support** YOLOv10/v11 (.onnx), and YOLOX (.onnx) formats
 - **Real-time Performance** with ~100-200ms inference times on CPU
 
 ### Production-Grade Architecture
