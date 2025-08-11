@@ -25,22 +25,19 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra -Wpedantic -Wn
 option(BUILD_CLIENT "Build client application" ON)
 option(BUILD_SERVER "Build server application" ON)
 option(BUILD_TESTS "Build tests" ON)
-option(BUILD_DOCUMENTATION "Create and install the HTML based API documentation (requires Doxygen)" OFF)
+option(BUILD_DOCS "Create and install the HTML based API documentation (requires Doxygen)" OFF)
 
 # Find required packages
-find_package(PkgConfig REQUIRED)
-find_package(Protobuf REQUIRED)
-find_package(gRPC REQUIRED)
-find_package(OpenCV REQUIRED)
-
-# Enable testing
-if(BUILD_TESTS)
-    enable_testing()
-    find_package(GTest)
+if(BUILD_TESTS OR BUILD_CLIENT OR BUILD_SERVER)
+    find_package(PkgConfig REQUIRED)
+    find_package(Protobuf REQUIRED)
+    find_package(gRPC REQUIRED)
+    find_package(OpenCV REQUIRED)
 endif()
 
-# Add subdirectories
-add_subdirectory(shared)
+if(BUILD_TESTS OR BUILD_CLIENT OR BUILD_SERVER)
+    add_subdirectory(shared)
+endif()
 
 if(BUILD_CLIENT)
     add_subdirectory(client)
@@ -50,14 +47,13 @@ if(BUILD_SERVER)
     add_subdirectory(server)
 endif()
 
-if(BUILD_TESTS)
+if(BUILD_TESTS AND BUILD_CLIENT AND BUILD_SERVER)
+    enable_testing()
+    find_package(GTest)
     add_subdirectory(tests)
 endif()
 
-# Documentation
-option(BUILD_DOCUMENTATION "Create and install the HTML based API documentation (requires Doxygen)" OFF)
-
-if(BUILD_DOCUMENTATION)
+if(BUILD_DOCS)
     find_package(Doxygen)
     if(DOXYGEN_FOUND)
         # Set input and output files
