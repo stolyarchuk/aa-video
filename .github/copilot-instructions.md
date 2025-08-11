@@ -102,7 +102,7 @@ This is a modern C++ project using CMake as the build system. Please follow thes
 
 ## Logging
 
-- **Always use AA_LOG_ macros** from `logging.h` instead of `std::cout`, `std::cerr`, or `printf`
+- **Always use AA_LOG_* macros** from `logging.h` instead of `std::cout`, `std::cerr`, or `printf`
 - Include `logging.h` header when using logging functionality
 - **Available log levels**:
   - `AA_LOG_ERROR("message")` - For error conditions and failures
@@ -125,7 +125,7 @@ This is a modern C++ project using CMake as the build system. Please follow thes
   ```
 
 - **Benefits**: Thread-safe, configurable log levels, consistent formatting, and can be optimized for production builds
-- **Never use** `std::cout`, `std::cerr`, `std::clog`, or `printf` for logging - use AA*LOG*\* macros instead
+- **Never use** `std::cout`, `std::cerr`, `std::clog`, or `printf` for logging - use AA_LOG_* macros instead
 
 ## gRPC Error Handling
 
