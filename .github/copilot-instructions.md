@@ -15,7 +15,7 @@ This is a modern C++ project using CMake as the build system. Please follow thes
   - Functions/Methods: PascalCase (e.g., `AddNumbers`, `GetValue`, `YoloPostProcessing`)
   - Variables: snake_case (e.g., `result_value`, `user_count`)
   - Constants: kConstantName (e.g., `kMaxValue`, `kDefaultTimeout`)
-  - Member variables: snake_case with trailing underscore (e.g., `value_`, `count_`)
+  - Member variables: snake*case with trailing underscore (e.g., `value*`, `count\_`)
   - Namespaces: snake_case (e.g., `aa`)
   - Macros: UPPER_SNAKE_CASE (e.g., `MY_MACRO`)
 - **Project Namespace**: Use `aa` as the main project namespace for all code.
@@ -33,6 +33,7 @@ This is a modern C++ project using CMake as the build system. Please follow thes
 - **Add blank lines** between groups for better readability
 - **Test files exception**: In test files, always place `<gtest/gtest.h>` first among all includes, before system includes
 - **Example**:
+
   ```cpp
   #include <chrono>
   #include <iostream>
@@ -46,7 +47,9 @@ This is a modern C++ project using CMake as the build system. Please follow thes
   #include "logging.h"
   #include "options.h"
   ```
+
 - **Test file example**:
+
   ```cpp
   #include <gtest/gtest.h>
 
@@ -99,7 +102,7 @@ This is a modern C++ project using CMake as the build system. Please follow thes
 
 ## Logging
 
-- **Always use AA_LOG_* macros** from `logging.h` instead of `std::cout`, `std::cerr`, or `printf`
+- **Always use AA*LOG*\* macros** from `logging.h` instead of `std::cout`, `std::cerr`, or `printf`
 - Include `logging.h` header when using logging functionality
 - **Available log levels**:
   - `AA_LOG_ERROR("message")` - For error conditions and failures
@@ -107,6 +110,7 @@ This is a modern C++ project using CMake as the build system. Please follow thes
   - `AA_LOG_INFO("message")` - For general information and status updates
   - `AA_LOG_DEBUG("message")` - For detailed debugging information
 - **Usage examples**:
+
   ```cpp
   #include "logging.h"
 
@@ -119,8 +123,9 @@ This is a modern C++ project using CMake as the build system. Please follow thes
   // Debug logging (can be compiled out in release builds)
   AA_LOG_DEBUG("Network output dims: " << dims << ", size: " << size);
   ```
+
 - **Benefits**: Thread-safe, configurable log levels, consistent formatting, and can be optimized for production builds
-- **Never use** `std::cout`, `std::cerr`, `std::clog`, or `printf` for logging - use AA_LOG_* macros instead
+- **Never use** `std::cout`, `std::cerr`, `std::clog`, or `printf` for logging - use AA*LOG*\* macros instead
 
 ## gRPC Error Handling
 
@@ -128,6 +133,7 @@ This is a modern C++ project using CMake as the build system. Please follow thes
 - gRPC Status is for **transport-level errors only** (network issues, serialization failures, etc.)
 - **Program-level errors** (business logic errors, validation failures) should be handled through protobuf message fields
 - Use error fields in response messages for application errors:
+
   ```cpp
   // Good: Program error in protobuf response
   response->set_success(false);
@@ -137,6 +143,7 @@ This is a modern C++ project using CMake as the build system. Please follow thes
   // Bad: Using gRPC status for program errors
   return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "Invalid input");
   ```
+
 - Reserve gRPC error statuses for actual transport/infrastructure failures
 
 ## Build and Development
@@ -155,8 +162,8 @@ This is a modern C++ project using CMake as the build system. Please follow thes
 - Include `@brief`, `@param`, `@return`, and `@throws` tags
 - Document all public classes and methods
 - Keep comments concise but informative
-- Generate docs with: `cmake -B build -DBUILD_DOCUMENTATION=ON && cmake --build build --target docs`
-- Generate docs with: `cmake -B build -DBUILD_DOCUMENTATION=ON && cmake --build build --target docs`
+- Generate docs with: `cmake -B build -DBUILD_DOCS=ON && cmake --build build --target docs`
+- Generate docs with: `cmake -B build -DBUILD_DOCS=ON && cmake --build build --target docs`
 
 ## Code Formatting
 
