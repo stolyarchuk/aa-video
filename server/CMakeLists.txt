@@ -1,9 +1,10 @@
 # Server application for video processing bot
-cmake_policy(SET CMP0146 OLD)
 
 # Source files
 set(SERVER_LIB_SOURCES
     src/detector_server.cpp
+    src/polygon_filter.cpp
+    src/yolo.cpp
 )
 
 set(SERVER_MAIN_SOURCES

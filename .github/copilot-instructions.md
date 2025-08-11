@@ -12,13 +12,14 @@ This is a modern C++ project using CMake as the build system. Please follow thes
 - **Documentation Style**: Be concise and technically professional. No verbose explanations. Use precise, direct language for comments, README files, and documentation.
 - **Naming Conventions** (Google Style):
   - Classes/Types: PascalCase (e.g., `Calculator`, `MyClass`)
-  - Functions/Methods: PascalCase (e.g., `AddNumbers`, `GetValue`)
+  - Functions/Methods: PascalCase (e.g., `AddNumbers`, `GetValue`, `YoloPostProcessing`)
   - Variables: snake_case (e.g., `result_value`, `user_count`)
   - Constants: kConstantName (e.g., `kMaxValue`, `kDefaultTimeout`)
   - Member variables: snake_case with trailing underscore (e.g., `value_`, `count_`)
   - Namespaces: snake_case (e.g., `aa`)
   - Macros: UPPER_SNAKE_CASE (e.g., `MY_MACRO`)
 - **Project Namespace**: Use `aa` as the main project namespace for all code.
+- **Nested Namespaces**: Use concatenated nested namespace syntax (C++17+) for future code. Write `namespace aa::detection::yolo {` instead of separate nested declarations like `namespace aa { namespace detection { namespace yolo {`
 - **Constructor Initialization**: Always use curly brackets `{}` for member initialization lists instead of parentheses `()`
 - **Constructor Parameters**: Use "pass by value and then move" idiom for constructor parameters where acceptable (e.g., for expensive-to-copy types like strings, containers, complex objects)
 
@@ -120,6 +121,23 @@ This is a modern C++ project using CMake as the build system. Please follow thes
   ```
 - **Benefits**: Thread-safe, configurable log levels, consistent formatting, and can be optimized for production builds
 - **Never use** `std::cout`, `std::cerr`, `std::clog`, or `printf` for logging - use AA_LOG_* macros instead
+
+## gRPC Error Handling
+
+- **Always return `grpc::Status::OK`** in gRPC service method implementations for successful program logic execution
+- gRPC Status is for **transport-level errors only** (network issues, serialization failures, etc.)
+- **Program-level errors** (business logic errors, validation failures) should be handled through protobuf message fields
+- Use error fields in response messages for application errors:
+  ```cpp
+  // Good: Program error in protobuf response
+  response->set_success(false);
+  response->set_error_message("Invalid input parameters");
+  return grpc::Status::OK;  // Transport succeeded
+
+  // Bad: Using gRPC status for program errors
+  return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "Invalid input");
+  ```
+- Reserve gRPC error statuses for actual transport/infrastructure failures
 
 ## Build and Development
 

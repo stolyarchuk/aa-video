@@ -64,6 +64,8 @@ class Options {
     return parser_.get<T>(parameter_name);
   }
 
+  bool Has(const std::string& parameter_name) const;
+
   /**
    * @brief Check if verbose output is enabled
    *

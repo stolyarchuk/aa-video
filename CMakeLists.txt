@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
+cmake_policy(SET CMP0146 OLD)
 
 # Project definition
 project(aa_video_processing VERSION 1.0.0 LANGUAGES CXX)

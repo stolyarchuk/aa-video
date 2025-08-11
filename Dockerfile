@@ -1,8 +1,8 @@
 ARG USER_NAME=ubuntu
-FROM nvidia/cuda:12.9.1-cudnn-devel-ubuntu24.04 AS base
+FROM docker.io/ubuntu:24.04 AS base
 
 ARG OPENCV_VERSION=4.12.0
- ARG GRPC_VERSION=1.74.1
+ARG GRPC_VERSION=1.74.1
 
 ENV DEBIAN_FRONTEND=noninteractive \
     APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=DontWarn
@@ -41,13 +41,11 @@ RUN --mount=type=cache,target=/root/.ccache \
     -DBUILD_PERF_TESTS=OFF \
     -DBUILD_OPENCV_PYTHON2=OFF \
     -DBUILD_OPENCV_PYTHON3=ON \
-    -DWITH_CUDA=ON \
     -DENABLE_FAST_MATH=ON \
-    -DCUDA_FAST_MATH=ON \
-    -DWITH_CUBLAS=ON \
+    -DWITH_CUDA=OFF \
     -DWITH_TBB=ON \
     -DWITH_GTK=ON \
-    -DOPENCV_DNN_CUDA=ON \
+    -DOPENCV_DNN_CUDA=OFF \
     -DWITH_NVCUVID=OFF \
     -DWITH_OPENCL=ON \
     -DWITH_GSTREAMER=ON \
@@ -56,13 +54,53 @@ RUN --mount=type=cache,target=/root/.ccache \
     ninja -j$(nproc) -l4 && ninja install && \
     ldconfig
 
+# Copy and build the codebase
+COPY . /app
+WORKDIR /app
+
+RUN rm -rf /app/build && cmake -B build -S . -DCMAKE_BUILD_TYPE=Release && \
+    cmake --build build --config Release
+
 FROM base AS development
+ARG USER_NAME
 
 RUN echo "${USER_NAME} ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/${USER_NAME}_user && \
     sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && \
     sed -i '/ru_RU.UTF-8/s/^# //g' /etc/locale.gen && \
     locale-gen
 
-FROM nvidia/cuda:12.9.1-cudnn-runtime-ubuntu24.04 AS production
+FROM docker.io/ubuntu:24.04 AS production
+ARG USER_NAME
 
-CMD [ "/bin/bash" ]
+ENV DEBIAN_FRONTEND=noninteractive \
+    APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=DontWarn
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    apt-get update -q && \
+    apt-get install -qy --no-install-recommends --no-install-suggests \
+    libprotobuf32t64 libgrpc++1.51 libgrpc29 \
+    libtbb12 libfreetype6 libharfbuzz0b \
+    libgstreamer1.0-0 libgstreamer-plugins-base1.0-0 \
+    libavcodec60 libavformat60 libavutil58 \
+    libgtk-3-0 libdc1394-25 libopenblas0 libwebpdemux2 \
+    ca-certificates && \
+    apt-get clean all && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy OpenCV libraries from builder stage
+COPY --from=base /usr/local/bin/ /usr/local/bin/
+COPY --from=base /usr/local/lib/ /usr/local/lib/
+COPY --from=base /usr/local/include/ /usr/local/include/
+COPY --from=base /usr/local/share/ /usr/local/share/
+
+# Copy application binaries from builder stage
+COPY --from=base /app/build/server/detector_server /usr/local/bin/
+COPY --from=base /app/build/client/detector_client /usr/local/bin/
+COPY --from=base /app/input /input
+COPY --from=base /app/models /models
+
+# Update library cache
+RUN ldconfig
+
+CMD [ "detector_server", "-m=/models/yolox_s.onnx" ]
