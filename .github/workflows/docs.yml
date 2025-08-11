@@ -40,7 +40,12 @@ jobs:
             graphviz
 
       - name: Configure CMake
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_DOCUMENTATION=ON
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_DOCUMENTATION=ON \
+            -DBUILD_SERVER=OFF \
+            -DBUILD_CLIENT=OFF \
+            -DBUILD_TESTS=OFF
 
       - name: Build documentation
         run: cmake --build build --target docs
