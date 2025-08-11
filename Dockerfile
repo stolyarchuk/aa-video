@@ -64,6 +64,16 @@ RUN rm -rf /app/build && cmake -B build -S . -DCMAKE_BUILD_TYPE=Release && \
 FROM base AS development
 ARG USER_NAME
 
+ENV DEBIAN_FRONTEND=noninteractive \
+    APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=DontWarn
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    apt-get update -q && \
+    apt-get install -qy --no-install-recommends openssh-client && \
+    apt-get clean all && \
+    rm -rf /var/lib/apt/lists/*
+
 RUN echo "${USER_NAME} ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/${USER_NAME}_user && \
     sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && \
     sed -i '/ru_RU.UTF-8/s/^# //g' /etc/locale.gen && \

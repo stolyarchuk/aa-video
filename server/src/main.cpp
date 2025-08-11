@@ -1,3 +1,22 @@
+/**
+ * @file main.cpp
+ * @brief Server application entry point for AA Video Processing System
+ *
+ * Initializes and runs the detector gRPC server for real-time object detection.
+ * Loads YOLO neural network models, configures polygon filtering, and provides
+ * high-performance inference services with graceful shutdown handling.
+ *
+ * Features:
+ * - Command line argument parsing and validation
+ * - YOLO model loading and initialization
+ * - gRPC server setup and lifecycle management
+ * - Signal handling for graceful shutdown
+ * - Comprehensive logging and error handling
+ *
+ * @author AA Video Processing Team
+ * @version 1.2.0
+ */
+
 #include <iostream>
 #include <memory>
 #include <signal.h>

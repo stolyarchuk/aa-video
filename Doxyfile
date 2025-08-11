@@ -6,7 +6,7 @@
 DOXYFILE_ENCODING      = UTF-8
 PROJECT_NAME           = "AA Video Processing System"
 PROJECT_NUMBER         = 1.2.0
-PROJECT_BRIEF          = "A modern C++23 video processing system with gRPC-based client-server architecture for real-time object detection using YOLO neural networks with advanced polygon-based detection zones, comprehensive memory safety, and segmentation fault protection"
+PROJECT_BRIEF          = "A modern C++23 video processing system with gRPC-based client-server architecture for real-time object detection using YOLO neural networks (YOLOv7, YOLOv10, YOLOv11, YOLOX) with advanced polygon-based detection zones, comprehensive memory safety, and segmentation fault protection"
 PROJECT_LOGO           =
 OUTPUT_DIRECTORY       = docs
 CREATE_SUBDIRS         = YES

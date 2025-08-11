@@ -4,11 +4,17 @@ package aa.proto;
 
 option cc_enable_arenas = true;
 
-// Video frame data representing OpenCV cv::Mat
+/**
+ * Video frame data representing OpenCV cv::Mat structure
+ *
+ * Minimal representation of OpenCV Mat with core properties needed
+ * for reconstruction. Supports all OpenCV data types and formats
+ * while maintaining efficient serialization over gRPC.
+ */
 message Frame {
-  int32 rows = 1;      // Number of rows (height)
-  int32 cols = 2;      // Number of columns (width)
-  int32 elm_type = 3;  // Element type (CV_8UC3, CV_32FC1, etc.)
-  int32 elm_size = 4;  // Size of each element in bytes
-  bytes data = 5;      // Raw pixel data
+  int32 rows = 1;      // Image height in pixels
+  int32 cols = 2;      // Image width in pixels
+  int32 elm_type = 3;  // OpenCV element type (CV_8UC3, CV_32FC1, etc.)
+  int32 elm_size = 4;  // Bytes per element (1 for CV_8U, 4 for CV_32F, etc.)
+  bytes data = 5;      // Raw pixel data in row-major order
 }

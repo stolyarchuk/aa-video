@@ -17,6 +17,14 @@ namespace aa::shared {
 class Polygon;
 }
 
+/**
+ * @brief Server-side components for the AA Video Processing System
+ *
+ * Contains gRPC server implementations, YOLO inference engines, polygon
+ * filtering systems, and server-specific functionality for real-time
+ * object detection processing. Provides high-performance neural network
+ * inference with advanced detection zone management.
+ */
 namespace aa::server {
 
 /**

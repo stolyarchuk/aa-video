@@ -8,9 +8,15 @@
 
 #include <opencv2/opencv.hpp>
 
+/**
+ * @brief Shared utility functions and constants for the AA Video Processing
+ * System
+ *
+ * Contains common functions, data structures, and constants used across
+ * client and server components. Includes drawing utilities, color constants,
+ * and shared type definitions.
+ */
 namespace aa::shared {
-
-// Common free functions for kthe shared namespace
 
 /**
  * @brief Draw a semi-transparent rectangle on an image

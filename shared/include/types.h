@@ -4,10 +4,19 @@
 
 namespace aa::shared {
 
+/**
+ * @brief Detection result from object detection neural network
+ *
+ * Contains bounding box coordinates, class identification, and confidence score
+ * for a single detected object from YOLO inference.
+ *
+ * @coco Used with COCO dataset classes (0-79)
+ * @yolo Compatible with YOLO model outputs
+ */
 struct Detection {
-  cv::Rect bbox;
-  int class_id;
-  float confidence;
+  cv::Rect bbox;     ///< Bounding box coordinates (x, y, width, height)
+  int class_id;      ///< COCO class ID (0-79)
+  float confidence;  ///< Detection confidence score (0.0-1.0)
 };
 
 /**
@@ -42,6 +51,15 @@ inline constexpr std::array<std::string_view, 80> kCocoClasses = {
     "vase",          "scissors",     "teddy bear",
     "hair drier",    "toothbrush"};
 
+/**
+ * @brief Predefined OpenCV color constants for visualization
+ *
+ * Contains BGR color values for drawing bounding boxes, text, and other
+ * visual elements in object detection results.
+ *
+ * @opencv Color values in OpenCV BGR format
+ * @note All colors are static const cv::Scalar for efficient reuse
+ */
 struct Color {
   inline static const cv::Scalar kAliceBlue{255, 248, 240};
   inline static const cv::Scalar kAntiqueWhite{215, 235, 250};

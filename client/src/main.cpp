@@ -1,3 +1,22 @@
+/**
+ * @file main.cpp
+ * @brief Client application entry point for AA Video Processing System
+ *
+ * Demonstrates detector client usage by sending images to the detector server
+ * for object detection processing. Generates sample polygon detection zones
+ * and processes responses with detected objects and bounding boxes.
+ *
+ * Features:
+ * - Command line argument parsing and validation
+ * - gRPC client connection to detector server
+ * - Image loading and frame conversion
+ * - Polygon zone generation for detection filtering
+ * - Result visualization and output saving
+ *
+ * @author AA Video Processing Team
+ * @version 1.2.0
+ */
+
 #include <chrono>
 #include <random>
 #include <set>

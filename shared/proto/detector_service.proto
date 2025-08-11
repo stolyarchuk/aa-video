@@ -7,28 +7,56 @@ import "polygon.proto";
 
 option cc_enable_arenas = true;
 
-// Processing request
+/**
+ * Processing request for object detection
+ *
+ * Contains input frame and optional polygon detection zones for filtering.
+ * Polygons define inclusion/exclusion areas with priority-based rules.
+ */
 message ProcessFrameRequest {
-  Frame frame = 1;
-  repeated Polygon polygons = 2;  // List of polygons for detection zones
+  Frame frame = 1;                    // Input image frame for processing
+  repeated Polygon polygons = 2;      // Detection zones with filtering rules
 }
 
-// Processing response
+/**
+ * Processing response with detection results
+ *
+ * Returns processed frame with detection visualizations and status.
+ * Success flag indicates if processing completed without errors.
+ */
 message ProcessFrameResponse {
-  Frame result = 1;
-  bool success = 2;  // Indicates if processing was successful
+  Frame result = 1;    // Output frame with detection bounding boxes
+  bool success = 2;    // Processing completion status
 }
 
-// Health check
+/**
+ * Health check request message
+ *
+ * Empty message for server health verification.
+ */
 message CheckHealthRequest {}
 
+/**
+ * Health check response message
+ *
+ * Returns server health status and descriptive message.
+ */
 message CheckHealthResponse {
-  bool healthy = 1;
-  string status = 2;
+  bool healthy = 1;    // Server health status
+  string status = 2;   // Descriptive status message
 }
 
-// Detection service
+/**
+ * AA Video Processing Detector Service
+ *
+ * gRPC service providing real-time object detection using YOLO neural networks.
+ * Supports polygon-based detection zones, multiple model formats, and
+ * comprehensive error handling with health monitoring.
+ */
 service DetectorService {
+  // Process frame for object detection with optional polygon filtering
   rpc ProcessFrame(ProcessFrameRequest) returns (ProcessFrameResponse);
+
+  // Check server health and availability
   rpc CheckHealth(CheckHealthRequest) returns (CheckHealthResponse);
 }

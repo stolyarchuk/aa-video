@@ -5,6 +5,13 @@
 #include "options.h"
 #include "rpc_client.h"
 
+/**
+ * @brief Client-side components for the AA Video Processing System
+ *
+ * Contains gRPC client implementations, RPC utilities, and client-specific
+ * functionality for communicating with the detector server. Provides
+ * high-level APIs for sending detection requests and receiving results.
+ */
 namespace aa::client {
 
 /**
