@@ -3,6 +3,9 @@ name: Documentation
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -38,10 +41,7 @@ jobs:
             graphviz
 
       - name: Configure CMake
-        run: |
-          export CC="ccache gcc"
-          export CXX="ccache g++"
-          cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_DOCUMENTATION=ON
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_DOCUMENTATION=ON
 
       - name: Build documentation
         run: cmake --build build --target docs
