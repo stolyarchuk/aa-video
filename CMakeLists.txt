@@ -70,7 +70,8 @@ if(BUILD_DOCS)
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMENT "Generating API documentation with Doxygen"
             VERBATIM)
-    else(DOXYGEN_FOUND)
+        file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/output/output.png DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/docs/html/output)
+    else()
         message("Doxygen need to be installed to generate the doxygen documentation")
-    endif(DOXYGEN_FOUND)
+    endif()
 endif()
