@@ -76,9 +76,15 @@ coverage/
 
 
 ipch
-models
-input
 *.sh
 debug_*
 *.png
 *.jpg
+models/*
+input/*
+
+!.devcontainer/*.sh
+!models/yolox_s.onnx
+!input/000000039769.jpg
+!input/dog_bike_car.jpg
+!output/*

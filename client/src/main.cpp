@@ -1,3 +1,22 @@
+/**
+ * @file main.cpp
+ * @brief Client application entry point for AA Video Processing System
+ *
+ * Demonstrates detector client usage by sending images to the detector server
+ * for object detection processing. Generates sample polygon detection zones
+ * and processes responses with detected objects and bounding boxes.
+ *
+ * Features:
+ * - Command line argument parsing and validation
+ * - gRPC client connection to detector server
+ * - Image loading and frame conversion
+ * - Polygon zone generation for detection filtering
+ * - Result visualization and output saving
+ *
+ * @author AA Video Processing Team
+ * @version 1.2.0
+ */
+
 #include <chrono>
 #include <random>
 #include <set>
@@ -61,72 +80,73 @@ int main(int argc, char* argv[]) {
   aa::shared::Frame frame(input_image);
   *frame_request.mutable_frame() = frame.ToProto();
 
-  // Create bounding box-like square polygons
-  std::random_device rd;
-  std::mt19937 gen(rd());
-  std::uniform_int_distribution<> priority_dist(0, 10);  // Random priority 0-10
-  std::uniform_int_distribution<> type_dist(
-      1, 2);  // 1=INCLUSION, 2=EXCLUSION (not 0)
-
-  // Calculate dimension constraints based on input_image size
-  double min_width = input_image.cols * 0.2;   // Minimum 20% of image width
-  double max_width = input_image.cols * 0.8;   // Maximum 80% of image width
-  double min_height = input_image.rows * 0.2;  // Minimum 20% of image height
-  double max_height = input_image.rows * 0.8;  // Maximum 80% of image height
-
-  std::uniform_real_distribution<> width_dist(min_width, max_width);
-  std::uniform_real_distribution<> height_dist(min_height, max_height);
-
   // Use all COCO classes (0-79)
   std::vector<int32_t> class_options;
   for (int32_t i = 0; i < 80; ++i) {
     class_options.push_back(i);
   }
 
-  for (int i = 0; i < 6; ++i) {
+  // First polygon: starts from left boundary (col = 0)
+  {
+    double polygon_width = input_image.cols * 0.89;  // 78% of image width
+    double polygon_height = input_image.rows;        // Full image height
+
     std::vector<aa::shared::Point> vertices;
+    double x_offset = 0.0;  // Left boundary
+    double y_offset = 0.0;  // Top boundary
 
-    // Generate random dimensions within constraints
-    double width = width_dist(gen);
-    double height = height_dist(gen);
+    // Create bounding box (4 vertices)
+    vertices.emplace_back(x_offset, y_offset);                  // Top-left
+    vertices.emplace_back(x_offset + polygon_width, y_offset);  // Top-right
+    vertices.emplace_back(x_offset + polygon_width,
+                          y_offset + polygon_height);            // Bottom-right
+    vertices.emplace_back(x_offset, y_offset + polygon_height);  // Bottom-left
 
-    // Calculate random position ensuring the polygon fits within image bounds
-    std::uniform_real_distribution<> x_dist(0.0, input_image.cols - width);
-    std::uniform_real_distribution<> y_dist(0.0, input_image.rows - height);
-
-    double x_offset = x_dist(gen);
-    double y_offset = y_dist(gen);
-
-    // Create bounding box-like square (4 vertices)
-    vertices.emplace_back(x_offset, y_offset);                   // Top-left
-    vertices.emplace_back(x_offset + width, y_offset);           // Top-right
-    vertices.emplace_back(x_offset + width, y_offset + height);  // Bottom-right
-    vertices.emplace_back(x_offset, y_offset + height);          // Bottom-left
-
-    // Random polygon type (not 0)
-    aa::shared::PolygonType type = (type_dist(gen) == 1)
-                                       ? aa::shared::PolygonType::INCLUSION
-                                       : aa::shared::PolygonType::EXCLUSION;
-
-    // Random priority
-    int32_t priority = priority_dist(gen);
-
-    // Use all target classes
+    aa::shared::PolygonType type = aa::shared::PolygonType::INCLUSION;
+    int32_t priority = 3;
     std::vector<int32_t> target_classes = class_options;
 
-    // Create polygon and add to request
     aa::shared::Polygon polygon(std::move(vertices), type, priority,
                                 std::move(target_classes));
     *frame_request.add_polygons() = polygon.ToProto();
 
-    AA_LOG_INFO("Added polygon "
-                << (i + 1) << ": bounding box (" << static_cast<int>(width)
-                << "x" << static_cast<int>(height) << "), "
-                << (type == aa::shared::PolygonType::INCLUSION ? "INCLUSION"
-                                                               : "EXCLUSION")
+    AA_LOG_INFO("Added polygon 1: left boundary ("
+                << static_cast<int>(polygon_width) << "x"
+                << static_cast<int>(polygon_height) << "), INCLUSION"
+                << ", priority=" << priority << ", position=(0,0)"
+                << ", classes=" << class_options.size());
+  }
+
+  // Second polygon: ends at right boundary (col = max_col)
+  {
+    double polygon_width = input_image.cols * 0.55;  // 55% of image width
+    double polygon_height = input_image.rows;        // Full image height
+
+    std::vector<aa::shared::Point> vertices;
+    double x_offset =
+        input_image.cols - polygon_width;  // Right boundary minus width
+    double y_offset = 0.0;                 // Top boundary
+
+    // Create bounding box (4 vertices)
+    vertices.emplace_back(x_offset, y_offset);                  // Top-left
+    vertices.emplace_back(x_offset + polygon_width, y_offset);  // Top-right
+    vertices.emplace_back(x_offset + polygon_width,
+                          y_offset + polygon_height);            // Bottom-right
+    vertices.emplace_back(x_offset, y_offset + polygon_height);  // Bottom-left
+
+    aa::shared::PolygonType type = aa::shared::PolygonType::EXCLUSION;
+    int32_t priority = 5;
+    std::vector<int32_t> target_classes = class_options;
+
+    aa::shared::Polygon polygon(std::move(vertices), type, priority,
+                                std::move(target_classes));
+    *frame_request.add_polygons() = polygon.ToProto();
+
+    AA_LOG_INFO("Added polygon 2: right boundary ("
+                << static_cast<int>(polygon_width) << "x"
+                << static_cast<int>(polygon_height) << "), INCLUSION"
                 << ", priority=" << priority << ", position=("
-                << static_cast<int>(x_offset) << ","
-                << static_cast<int>(y_offset) << ")"
+                << static_cast<int>(x_offset) << ",0)"
                 << ", classes=" << class_options.size());
   }
 
@@ -141,7 +161,17 @@ int main(int argc, char* argv[]) {
       aa::shared::Frame::FromProto(frame_response.result()).ToMat();
   auto output_path = options.Get<std::string>("output");
 
-  cv::imwrite(output_path, result_image);
+  if (!result_image.empty()) {
+    cv::imwrite(output_path, result_image);
 
+    const std::string kWinName = "Yolo Object Detector";
+    cv::namedWindow(kWinName, cv::WINDOW_NORMAL);
+    cv::imshow(kWinName, result_image);
+
+    if (int k = cv::waitKey(30000); k == 27) {  // ESC key to exit
+      AA_LOG_INFO("Exiting on user request");
+    }
+    AA_LOG_INFO("Processed frame saved to: " << output_path);
+  }
   return 0;
 }

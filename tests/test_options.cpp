@@ -120,7 +120,7 @@ TEST_F(OptionsTest, FullParameterConstruction) {
 TEST_F(OptionsTest, ParameterAliases) {
   auto options =
       CreateOptions({"test_program", "-i=input.jpg", "-o=output.jpg", "-w=800",
-                     "--ht=600",  // height alias
+                     "--h=600",  // height alias
                      "-c=0.7", "-m=model.onnx", "-a=server:9090", "-v"});
 
   EXPECT_TRUE(options->IsValid());
@@ -273,13 +273,13 @@ TEST_F(OptionsTest, TemplateMethodBoolType) {
 }
 
 // Test empty output parameter (optional)
-TEST_F(OptionsTest, EmptyOutputParameter) {
+TEST_F(OptionsTest, NonEmptyOutputParameter) {
   auto options = CreateOptions({"test_program"});
 
   EXPECT_TRUE(options->IsValid());
 
   std::string output = options->Get<std::string>("output");
-  EXPECT_TRUE(output.empty());  // Default empty value for output
+  EXPECT_FALSE(output.empty());  // Default empty value for output
 }
 
 // Test verbose convenience method

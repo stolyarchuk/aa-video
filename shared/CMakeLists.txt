@@ -48,6 +48,7 @@ add_custom_target(proto_generation DEPENDS ${PROTO_GENERATED_SOURCES} ${PROTO_GE
 
 # Source files for shared library
 set(SHARED_SOURCES
+    src/common.cpp
     src/options.cpp
     src/signal_set.cpp
     src/point.cpp

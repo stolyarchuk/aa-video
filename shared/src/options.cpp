@@ -4,20 +4,26 @@
 
 namespace {
 // Define command line parameters using OpenCV's format
-// Format: "{parameter_name|alias|default_value|description}"
+// Format: "{parameter_name alias|default_value|description}"
 
 const cv::String keys =
     "{help h usage ? |      | Print this help message}"
+    "{address a      | localhost:50051 | Server address for gRPC }"
     "{input i        |<NONE>| Input file path (optional)}"
     "{output o       |output.png| Output file path (optional)}"
-    "{width w        | 640  | Frame width for processing}"
-    "{height ht      | 640  | Frame height for processing}"
-    "{confidence c   | 0.5  | Confidence threshold for detection (0.0-1.0)}"
     "{model m        |<NONE>| Path to detection model file (REQUIRED)}"
-    "{cfg            |<NONE>| Path to YOLOv7 configuration file (optional)}"
-    "{address a      | localhost:50051 | Server address for gRPC "
-    "communication}"
-    "{verbose v      | false| Enable verbose output}";
+    "{mean           |      | Normalization constant. }"
+    "{scale          |      | Preprocess input image by multiplying on a "
+    "scale factor. }"
+    "{width w        |  640  | Frame width for processing}"
+    "{height h       |  640  | Frame height for processing}"
+    "{padvalue       | 114.0 | padding value. }"
+    "{rgb            |   0   | Indicate that model works with RGB input images "
+    "instead BGR ones. }"
+    "{confidence c   | 0.5   | Confidence threshold for detection (0.0-1.0)}"
+    "{thr            | 0.5   | Confidence threshold. }"
+    "{nms            | 0.4   | Non-maximum suppression threshold. }"
+    "{verbose v      | false | Enable verbose output}";
 }  // namespace
 
 namespace aa::shared {
@@ -33,6 +39,10 @@ bool Options::IsValid() const { return is_valid_; }
 void Options::PrintHelp() const { parser_.printMessage(); }
 
 bool Options::IsVerbose() const { return parser_.get<bool>("verbose"); }
+
+bool Options::Has(const std::string& parameter_name) const {
+  return parser_.has(parameter_name);
+}
 
 void Options::InitializeParser(int argc, const char* const argv[],
                                std::string_view name) {

@@ -88,9 +88,9 @@
     {
       "label": "Run Application",
       "type": "shell",
-      "command": "./build/test_task",
+      "command": "./build/server/detector_server -m=/workspaces/test/models/yolo11s.onnx",
       "group": "build",
-      "dependsOn": "Build Project"
+      // "dependsOn": "Build Project"
     },
     {
       "label": "Generate Documentation",
