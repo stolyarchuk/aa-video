@@ -22,34 +22,6 @@ jobs:
         with:
           fetch-depth: 0 # Fetch full history for proper documentation
 
-      - name: Cache APT packages
-        uses: actions/cache@v4
-        with:
-          path: /var/cache/apt
-          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/docs.yml') }}
-          restore-keys: |
-            ${{ runner.os }}-apt-
-
-      - name: Cache CMake build
-        uses: actions/cache@v4
-        with:
-          path: |
-            build
-            ~/.cmake
-          key: ${{ runner.os }}-cmake-${{ hashFiles('**/CMakeLists.txt', 'cmake/**') }}
-          restore-keys: |
-            ${{ runner.os }}-cmake-
-
-      - name: Cache documentation artifacts
-        uses: actions/cache@v4
-        with:
-          path: |
-            build/docs
-            build/_deps
-          key: ${{ runner.os }}-docs-${{ hashFiles('**/CMakeLists.txt', 'Doxyfile', 'shared/**', 'client/**', 'server/**') }}
-          restore-keys: |
-            ${{ runner.os }}-docs-
-
       - name: Install dependencies
         run: |
           sudo apt-get update
@@ -63,64 +35,13 @@ jobs:
             unzip \
             ca-certificates \
             doxygen \
-            graphviz \
-            autoconf \
-            libtool \
-            libssl-dev \
-            zlib1g-dev \
-            libc-ares-dev \
-            libabsl-dev \
-            libprotobuf-dev \
-            protobuf-compiler \
-            protobuf-compiler-grpc \
-            libgrpc++-dev \
-            libgrpc-dev \
-            libopencv-dev \
-            libopencv-contrib-dev \
-            libeigen3-dev \
-            libgflags-dev \
-            libgoogle-glog-dev \
-            libtbb-dev \
-            libatlas-base-dev \
-            liblapack-dev \
-            libblas-dev \
-            libhdf5-dev \
-            libgtk-3-dev \
-            libavcodec-dev \
-            libavformat-dev \
-            libswscale-dev \
-            libv4l-dev \
-            libxvidcore-dev \
-            libx264-dev \
-            libjpeg-dev \
-            libpng-dev \
-            libtiff-dev \
-            gfortran \
-            openexr \
-            python3-dev \
-            python3-numpy \
-            libtbbmalloc2 \
-            libdc1394-dev \
-            libgtest-dev \
-            libgmock-dev \
-            ccache
-
-      - name: Setup ccache
-        uses: hendrikmuhs/ccache-action@v1.2
-        with:
-          key: ${{ runner.os }}-ccache-docs
-          max-size: 2G
+            graphviz
 
       - name: Configure CMake
         run: |
           export CC="ccache gcc"
           export CXX="ccache g++"
-          cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_DOCUMENTATION=ON \
-            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
-            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
-
-      - name: Build project (required for some documentation dependencies)
-        run: cmake --build build --config Release
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_DOCUMENTATION=ON
 
       - name: Build documentation
         run: cmake --build build --target docs
