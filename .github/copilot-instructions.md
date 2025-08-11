@@ -15,7 +15,7 @@ This is a modern C++ project using CMake as the build system. Please follow thes
   - Functions/Methods: PascalCase (e.g., `AddNumbers`, `GetValue`, `YoloPostProcessing`)
   - Variables: snake_case (e.g., `result_value`, `user_count`)
   - Constants: kConstantName (e.g., `kMaxValue`, `kDefaultTimeout`)
-  - Member variables: snake*case with trailing underscore (e.g., `value*`, `count\_`)
+  - Member variables: snake_case with trailing underscore (e.g., `value_`, `count_`)
   - Namespaces: snake_case (e.g., `aa`)
   - Macros: UPPER_SNAKE_CASE (e.g., `MY_MACRO`)
 - **Project Namespace**: Use `aa` as the main project namespace for all code.
@@ -102,7 +102,7 @@ This is a modern C++ project using CMake as the build system. Please follow thes
 
 ## Logging
 
-- **Always use AA*LOG*\* macros** from `logging.h` instead of `std::cout`, `std::cerr`, or `printf`
+- **Always use AA_LOG_ macros** from `logging.h` instead of `std::cout`, `std::cerr`, or `printf`
 - Include `logging.h` header when using logging functionality
 - **Available log levels**:
   - `AA_LOG_ERROR("message")` - For error conditions and failures
