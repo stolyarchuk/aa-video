@@ -1,23 +1,24 @@
-# YoloX OpenCV Processing System
+# aa-video
 
-![YoloX OpenCV Processing System](output/output.png)
+![output image](output/output.png)
 
-This is a small C++ video processing project. It uses gRPC and OpenCV to run YOLO models for object detection.
+A small C++ project for object detection using YOLO models and OpenCV.
+It uses gRPC for client-server communication.
 
-Docs: [https://stolyarchuk.github.io/aa-video/](https://stolyarchuk.github.io/aa-video/)
+Full docs: [Complete docs](https://stolyarchuk.github.io/aa-video/)
 
 ## What it does
 
-- Runs YOLO-style models (YOLOv7/10/11, YOLOX) via OpenCV DNN.
-- Serves detection over gRPC to clients.
-- Filters detections with polygon zones (include/exclude, priorities).
-- Uses RAII and bounds checks for safer code.
+- Runs YOLO models (.onnx) with OpenCV DNN.
+- Serves detection results over gRPC.
+- Supports polygon-based include/exclude zones with priorities.
+- Provides tests and basic CI integration.
 
 ## Quick start
 
-Requirements: CMake 3.20+, a C++23 compiler, OpenCV with DNN, protobuf & gRPC libraries.
+You need CMake, a C++23 compiler, OpenCV, gRPC, and protobuf.
 
-Build (debug):
+Configure and build (debug):
 
 ```bash
 cmake -B build -S . -DCMAKE_BUILD_TYPE=Debug
@@ -30,7 +31,7 @@ Run the server with a model:
 ./build/server/detector_server --model=./models/yolox_s.onnx --verbose=true
 ```
 
-Run the client (example):
+Run the client on an image:
 
 ```bash
 ./build/client/detector_client --input=input/000000039769.jpg --verbose=true
@@ -43,31 +44,24 @@ cmake --build build --target test
 ctest --test-dir build --output-on-failure
 ```
 
-## Polygons and filtering
+## Project layout
 
-- Inclusion zones: detect only listed classes inside them.
-- Exclusion zones: block detections inside them.
-- Priority: higher-priority polygons win in overlaps.
-- Per-polygon class lists and coordinate scaling are supported.
-
-See the docs for full examples and config format.
+- `client/` - client app
+- `server/` - server app and inference code
+- `shared/` - proto and shared code
+- `models/` - sample models
+- `tests/` - unit tests
 
 ## Notes
 
-- Expected CPU inference time: ~100–200 ms per frame (depends on model and CPU).
-- Minimum: 4 GB RAM, 2 cores. More is better.
+- The code targets C++23 and follows Google style rules.
+- Polygon filtering, NMS, and coordinate scaling are implemented.
+- See the docs link above for detailed guides and API reference.
 
-## Development
+## Contributing
 
-- Follow Google C++ style and C++23 idioms.
-- Tests use Google Test.
-- Use the provided devcontainer for a consistent environment.
+Pull requests are welcome. Follow the repo's contribution guide.
 
 ## License
 
-MIT — see the `LICENSE` file.
-
-## Links
-
-- Docs: [Docs](https://stolyarchuk.github.io/aa-video/)
-- Issues: [Issues](https://github.com/stolyarchuk/aa-video/issues)
+MIT. See the `LICENSE` file.
